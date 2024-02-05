@@ -9,5 +9,6 @@ Flask-Cors==4.0.0
 Flask-CKEditor==0.4.6
 Flask-Mail==0.9.1
 Pillow==9.5.0
+email-validator==2.1.0.post1
 Werkzeug==2.2.2
 gunicorn
