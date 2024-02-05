@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    .form-wrapper {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        margin-top: 30px;
+        grid-column: span 2;
+        text-align: center;
+    }
+
+    /*    sssssssssssssssssssssssssssssssss*/
+    #carForm {
+        display: grid;
+        grid-gap: .5em;
+        grid-template-areas:
+            "detail1  detailTwo detail3"
+            "detail1  detailThree detail4";
+        grid-template-columns:33% 33% 33%;
+    }
+
+
+    #carForm > div:nth-child(2) {
+        grid-area: detailTwo;
+        height: 100%;
+        position: sticky;
+        top: 0;
+    }
+</style>
+{{ ckeditor.load() }}
+<div style="display: flex">
+    <div class="border p-4 mt-4 shadow-lg" style="width: 600px">
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('add_regions') }}">
+            <div class="form-wrapper">
+                <div class="mb-3 form-group">
+                    <label for="image" class="form-label">Thumbnail:</label>
+                    <input id="image" name="image" class="form-control" type="file">
+                </div>
+                <div class="mb-3 form-group">
+                    <label for="images" class="form-label">Images:</label>
+                    <input id="images" name="images" class="form-control" type="file" multiple>
+                </div>
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="name">Name</label>
+                    <input type="text" class="form-control" name="name" id="name">
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label">Article 1</label>
+                    {{ ckeditor.create( name='aone' ) }}
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label">Article 2</label>
+                    {{ ckeditor.create( name='atwo' ) }}
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label">Article 3</label>
+                    {{ ckeditor.create( name='athree' ) }}
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="video">Embed Video</label>
+                    <input type="url" class="form-control" name="video" id="video">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="{{ url_for('manage_regions') }}" type="submit"
+                   class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

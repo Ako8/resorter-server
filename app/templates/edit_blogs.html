@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    .form-wrapper {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        margin-top: 30px;
+        grid-column: span 2;
+        text-align: center;
+    }
+
+    /*    sssssssssssssssssssssssssssssssss*/
+    #carForm {
+        display: grid;
+        grid-gap: .5em;
+        grid-template-areas:
+            "detail1  detailTwo detail3"
+            "detail1  detailThree detail4";
+        grid-template-columns:33% 33% 33%;
+    }
+
+
+    #carForm > div:nth-child(2) {
+        grid-area: detailTwo;
+        height: 100%;
+        position: sticky;
+        top: 0;
+    }
+</style>
+{{ ckeditor.load() }}
+<div style="display: flex">
+    <div class="border p-4 mt-4 shadow-lg" style="width: 600px; border-top-right-radius: 0;  border-bottom-right-radius: 0">
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('edit_blogs', id=blog.id) }}">
+            <div class="form-wrapper">
+                <div class="input-group">
+                    <input type="file" class="form-control" id="images" name="images"
+                           aria-describedby="inputGroupFileAddon04" aria-label="Upload" multiple>
+                    <div class="btn border btn-outline-secondary">
+                        <label for="delimage">Delete</label>
+                        <input class="form-check-input m-2 border" type="checkbox" id="delimage" name="delimage"
+                               aria-label="Checkbox for following text input">
+                    </div>
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label"  for="name">Name</label>
+                    <input type="text" value="{{ blog.name }}" class="form-control" name="name" id="name">
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label">Overview</label>
+                    {{ ckeditor.create( name='overview', value=blog.overview ) }}
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="region">Region</label>
+                    <select data-allow-blank="1" class="form-select" id="region" name="region" tabindex="-1"
+                            title="Region">
+                        {% for reg in regions %}
+                        <option value="{{ reg.id }}">{{reg.name}}</option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="place_type">Place Type</label>
+                    <select data-allow-blank="1" class="form-select" id="place_type" name="place_type" tabindex="-1"
+                            title="Place type">
+                        <option value="resort" {% if blog.place_type == 'resort' %} selected {% endif %}>კურორტი</option>
+                        <option value="cultural monument" {% if blog.place_type == 'cultural monument' %} selected {% endif %}>კულტურული ძეგლი</option>
+                        <option value="nature" {% if blog.place_type == 'nature' %} selected {% endif %}>ბუნება</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="map">Map</label>
+                    <input type="text" class="form-control" value="{{ blog.map }}" name="map" id="map">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="{{ url_for('manage_blogs') }}" type="submit"
+                   class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+    <div class="border p-4 mt-4" style="width: 450px; border-top-left-radius: 0;  border-bottom-left-radius: 0">
+        <div class="mt-5">
+            <h3>{{ blog.name }}</h3>
+            <div class="mt-3" >
+                {% for img in blog_images.images %}
+                <img src="data:image/png;base64,{{ img }}" style="margin-bottom: 20px; display: flex; width: 100%;"
+                     alt="Image">
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

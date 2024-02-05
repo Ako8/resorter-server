@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<form method="post" action="{{ url_for('edit_user', id=user.id) }}">
+    <div class="border p-4 mt-4 shadow-lg" style="width: 600px;>
+    <form method=">
+        <div class="mb-3 form-group">
+            <label class="form-label" for="username">Company Name</label>
+            <input type="text" class="form-control" value="{{ user.username }}" name="username"
+                   id="username">
+        </div>
+        <div class="mb-3 form-group">
+            <label class="form-label" for="email">Email</label>
+            <input type="email" class="form-control" value="{{ user.email }}" name="email" id="email">
+        </div>
+        <div class="mb-3 form-group">
+            <button type="submit" class="form-control">Submit</button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

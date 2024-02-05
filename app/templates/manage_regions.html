@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<h2>Manage regions</h2>
+<div class="border mt-3 p-4 shadow-lg">
+    <a href="{{ url_for('add_regions') }}" class="btn btn-sm" style="background-color: #10dc10">Add Region</a>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Thumbnail</th>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for region in regions %}
+        <tr>
+            <td>{{region.id}}</td>
+            <td></td>
+            <td>{{region.name}}</td>
+            <td>
+                <a href="{{url_for('edit_regions', id=region.id)}}" class="btn btn-primary btn-sm">Edit</a>
+                <button class="btn btn-danger btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#confirmDeleteModal{{ region.id }}">Delete
+                </button>
+            </td>
+        </tr>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="confirmDeleteModal{{ region.id }}" tabindex="-1"
+             aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmDeleteModalLabel">დაადასტურე წაშლა</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        დარწმუნებული ხარ რომ გინდა წაშალო? აღდგენა შეუძლებელია!
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">უკან
+                        </button>
+                        <a class="btn btn-danger"
+                           href="{{ url_for('delete_region', id=region.id) }}">წაშლა</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

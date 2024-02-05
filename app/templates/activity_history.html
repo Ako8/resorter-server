@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<h2>IP:{{ act.ip_add }} activity history </h2>
+<a href="{{url_for('activity' )}}" class="btn btn-primary btn-sm">Go Back</a>
+
+<div class="border p-4 shadow-lg mt-2">
+    <h3>Activity Log</h3>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Page</th>
+            <th>Browser</th>
+
+        </tr>
+        </thead>
+        <tbody>
+        {% for ord in history %}
+        <tr>
+            <td>{{ ord.date }}</td>
+            <td>{{ ord.page }}</td>
+            <td>{{ ord.browser }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<h2>Orders</h2>
+<div class="border mt-3 p-4 shadow-lg">
+    <h3>CAR ORDERS TABLE</h3>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Car Name</th>
+            <th>Price</th>
+            <th>Car Owner</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Real Order</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for ord in car_orders %}
+        <tr>
+            <td>{{ ord.id }}</td>
+            <td>{{ ord.car_name }}</td>
+            <td>{{ ord.total_price }}</td>
+            <td>{{ ord.host }}</td>
+            <td>{{ ord.customer_name }}</td>
+            <td>{{ ord.customer_phone }}</td>
+            <td>{{ ord.order_owner }}</td>
+            <td>Done</td>
+            <td>
+                <a href="" class="btn btn-primary btn-sm">Edit</a>
+                <button class="btn btn-danger btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#confirmDeleteModal{{ ord.id }}">Delete
+                </button>
+            </td>
+        </tr>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="confirmDeleteModal{{ ord.id }}" tabindex="-1"
+             aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmDeleteModalLabel">დაადასტურე წაშლა</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        დარწმუნებული ხარ რომ გინდა წაშალო? აღდგენა შეუძლებელია!
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">უკან
+                        </button>
+                        <a class="btn btn-danger"
+                           href="{{url_for('car_ord_delete', id=ord.id )}}">წაშლა</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mt-5 border p-4 shadow-lg">
+    <h3>FLAT ORDERS TABLE</h3>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Flat Name</th>
+            <th>Renter</th>
+            <th>Landlord</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for ord in flat_orders %}
+        <tr>
+            <td>{{ ord.id }}</td>
+            <td>{{ ord.flat_name }}</td>
+            <td>{{ ord.email }}</td>
+            <td>{{ ord.host }}</td>
+            <td>Done</td>
+            <td>
+                <button class="btn btn-primary btn-sm">Details</button>
+                <a href="{{url_for('flat_ord_delete', id=ord.id )}}" class="btn btn-danger btn-sm">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

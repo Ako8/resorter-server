@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    .form-wrapper {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        margin-top: 30px;
+        grid-column: span 2;
+        text-align: center;
+    }
+
+    /*    sssssssssssssssssssssssssssssssss*/
+    #carForm {
+        display: grid;
+        grid-gap: .5em;
+        grid-template-areas:
+            "detail1  detailTwo detail3"
+            "detail1  detailThree detail4";
+        grid-template-columns:33% 33% 33%;
+    }
+
+
+    #carForm > div:nth-child(2) {
+        grid-area: detailTwo;
+        height: 100%;
+        position: sticky;
+        top: 0;
+    }
+</style>
+<div style="display: flex">
+    <div class="border p-4 mt-4 shadow-lg" style="width: 600px">
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('upload_car') }}">
+            <div class="form-wrapper">
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="image">Thumbnail</label>
+                    <input type="file" class="form-control" name="image" id="image">
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="images">Images</label>
+                    <input type="file" class="form-control" name="images" id="images" multiple>
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="name">Name</label>
+                    <input type="text" class="form-control" name="name" id="name">
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="overview">Overview</label>
+                    <input type="text" class="form-control" name="overview" id="overview"">
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="car_type">Car type</label>
+                    <select id="car_type" class="form-select" name="car_type">
+                        <option value="sedan">სედანი</option>
+                        <option value="jeep">ჯიპი</option>
+                        <option value="hetchback">ჰეტჩბექი</option>
+                        <option value="kupe">კუპე</option>
+                        <option value="kabrioleti">კაბრიოლეტი</option>
+                        <option value="pikapi">პიკაპი</option>
+                        <option value="miniveni">მინივენი</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="rent_price">Day price</label>
+                    <input type="number" class="form-control" name="rent_price" id="rent_price">
+                </div>
+
+                <section id="carForm">
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="gearbox">Gearbox:</label>
+                        <select class="form-select" id="gearbox" name="gearbox">
+                            <option value="Automatic">Auto</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="engine">Engine:</label>
+                        <input type="text" class="form-control" name="engine" id="engine"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="year_of_manufacture">Year of Manufacture:</label>
+                        <input type="number" class="form-control" name="year_of_manufacture" id="year_of_manufacture"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="audio_system">Audio System:</label>
+                        <input type="text" class="form-control" name="audio_system" id="audio_system"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="number_of_seats">Number of Seats:</label>
+                        <input type="number" class="form-control" name="number_of_seats" id="number_of_seats"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="drive">Drive</label>
+                        <select id="drive" name="drive" class="form-select">
+                            <option value="fwd">FWD</option>
+                            <option value="rwd">RWD</option>
+                            <option value="awd">AWD</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="power">Power</label>
+                        <input type="text" class="form-control" name="power" id="power"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="airbags">Airbags</label>
+                        <input type="number" class="form-control" name="airbags" id="airbags"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="air_conditioning">Air conditioning</label>
+                        <input type="text" class="form-control" name="air_conditioning" id="air_conditioning"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="roof">Roof</label>
+                        <input type="text" class="form-control" name="roof" id="roof" required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="tank">Tank</label>
+                        <input type="text" class="form-control" name="tank" id="tank" required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="fuel">Fuel</label>
+                        <input type="text" class="form-control" name="fuel" id="fuel" required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="wheel_side">Wheel side</label>
+                        <select class="form-select" name="wheel_side" id="wheel_side">
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="consumption">Consumption</label>
+                        <input type="text" class="form-control" name="consumption" id="consumption"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="interior">Interior</label>
+                        <input type="text" class="form-control" name="interior" id="interior"
+                               required>
+                    </div>
+
+                    <div class="mb-3 form-group">
+                        <label class="form-label" for="power_windows">Power windows</label>
+                        <input type="number" class="form-control" name="power_windows" id="power_windows"
+                               required>
+                    </div>
+                </section>
+                <div class="form-group">
+                    <div class="mb-3 form-check  form-check-inline">
+                        <label class="form-check-label" for="abs">ABS</label>
+                        <input type="checkbox" class="form-check-input" name="abs" id="abs">
+                    </div>
+
+                    <div class="mb-3 form-check form-check-inline">
+                        <label class="form-check-label" for="ebd">EBD</label>
+                        <input type="checkbox" class="form-check-input" name="ebd" id="ebd">
+                    </div>
+
+                    <div class="mb-3 form-check form-check-inline">
+                        <label class="form-check-label" for="esp">ESP</label>
+                        <input type="checkbox" class="form-check-input" name="esp" id="esp">
+                    </div>
+
+                    <div class="mb-3 form-check form-check-inline">
+                        <label class="form-check-label" for="cruise_control">Cruise control</label>
+                        <input type="checkbox" class="form-check-input" name="cruise_control" id="cruise_control">
+                    </div>
+
+                    <div class="mb-3 form-check form-check-inline">
+                        <label class="form-check-label" for="parking_assist">Parking assist</label>
+                        <input type="checkbox" class="form-check-input" name="parking_assist" id="parking_assist">
+                    </div>
+
+                    <div class="mb-3 form-check form-check-inline">
+                        <label class="form-check-label" for="rear_view_camera">Rear view camera</label>
+                        <input type="checkbox" class="form-check-input" name="rear_view_camera" id="rear_view_camera">
+                    </div>
+                </div>
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="for_rent">For rent</label>
+                    <select class="form-select" id="for_rent" name="for_rent">
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                        <option value="unavailable" selected>Is not available</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Add</button>
+                <a href="{{ url_for('manage_cars') }}" type="submit"
+                   class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

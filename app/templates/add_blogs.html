@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    .form-wrapper {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        margin-top: 30px;
+        grid-column: span 2;
+        text-align: center;
+    }
+
+    /*    sssssssssssssssssssssssssssssssss*/
+    #carForm {
+        display: grid;
+        grid-gap: .5em;
+        grid-template-areas:
+            "detail1  detailTwo detail3"
+            "detail1  detailThree detail4";
+        grid-template-columns:33% 33% 33%;
+    }
+
+
+    #carForm > div:nth-child(2) {
+        grid-area: detailTwo;
+        height: 100%;
+        position: sticky;
+        top: 0;
+    }
+</style>
+{{ ckeditor.load() }}
+<div style="display: flex">
+    <div class="border p-4 mt-4 shadow-lg" style="width: 600px">
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('add_blogs') }}">
+            <div class="form-wrapper">
+                <div class="mb-3 form-group">
+                    <label for="images" class="form-label">Images:</label>
+                    <input id="images" name="images" class="form-control" type="file" multiple>
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="name">Name</label>
+                    <input type="text" class="form-control" name="name" id="name">
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label">Overview</label>
+                    {{ ckeditor.create( name='overview' ) }}
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="region">Region</label>
+                    <select data-allow-blank="1" class="form-select" id="region" name="region" tabindex="-1"
+                            title="Region">
+                        {% for reg in regions %}
+                        <option>{{reg.name}}</option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="place_type">Place Type</label>
+                    <select data-allow-blank="1" class="form-select" id="place_type" name="place_type" tabindex="-1"
+                            title="Place type">
+                        <option value="resort">კურორტი</option>
+                        <option value="cultural monument">კულტურული ძეგლი</option>
+                        <option value="nature">ბუნება</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="map">Map</label>
+                    <input type="text" class="form-control" name="map" id="map">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="{{ url_for('manage_blogs') }}" type="submit"
+                   class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
