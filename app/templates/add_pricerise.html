@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Add price rise</title>
+</head>
+<body>
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    h2 {
+        color: #333333;
+    }
+</style>
+<div class="container mt-5 p-4">
+    <h2>Add discount</h2>
+
+    <form method="post">
+        <div style=" display: flex;flex-wrap: wrap; justify-content: space-between">
+            <div class="form-group mt-4 col-md-3">
+                <label for="discountName">Discount name</label>
+                <input type="text" class="form-control" name="discountName" id="discountName" placeholder="Enter price rise name">
+            </div>
+
+            <div class="form-row mt-4 col-md-12">
+                <div class="form-group col-md-2" style="display: inline-block">
+                    <label for="validFrom">Valid from</label>
+                    <input type="date" class="form-control" name="validFrom" id="validFrom" placeholder="mm/dd/yyyy">
+                </div>
+                <div class="form-group col-md-2" style="display: inline-block">
+                    <label for="validTo">to</label>
+                    <input type="date" class="form-control" name="validTo" id="validTo" placeholder="mm/dd/yyyy">
+                </div>
+            </div>
+
+            <div class="form-group mt-4 col-md-3">
+                <label for="discountPercentage">Price rise percentage</label>
+                <input type="number" class="form-control" name="discountPercentage" id="discountPercentage"
+                       placeholder="Enter price rise percentage">
+            </div>
+        </div>
+
+        <h4 class="mt-4">For Cars</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 2rem">
+            {% for car in cars %}
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="{{ car.id }}" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid" type="checkbox"
+                       id="{{ car.id }}">
+                <label class="form-check-label" style="margin-left: 10px" for="{{ car.id }}">
+                    {{ car.brand }} {{ car.model }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group mt-4 col-md-12">
+            <button type="submit" class="btn btn-primary ">Add Price rise</button>
+        </div>
+    </form>
+</div>
+</body>
+{% endblock %}
+</html>
+

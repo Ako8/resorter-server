@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Discount</title>
+</head>
+<body>
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    h2 {
+        color: #333333;
+    }
+</style>
+<div class="container mt-5 p-4">
+    <div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Discount Name</th>
+                <th scope="col">Valid From</th>
+                <th scope="col"></th>
+                <th scope="col"><a href="{{ url_for('add_discount') }}">Add discount</a></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for discount in discounts %}
+            <tr>
+                <td>{{ discount.discount_name }}</td>
+                <td>-{{ discount.discount_percentage }}% {{ discount.valid_from }} - {{ discount.to }}</td>
+                <td>
+                    {% for i in discount.discounted_cars %}
+                        {{ i.brand }} {{ i.model }},
+                    {% endfor %}
+                </td>
+                <td><a href="{{ url_for('edit_discount', id=discount.id) }}">Edit discount</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-5">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Price rise Name</th>
+                <th scope="col">Valid From</th>
+                <th scope="col"></th>
+                <th scope="col"><a href="{{ url_for('add_pricerise') }}">Add price rise</a></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for discount in price_rise %}
+            <tr>
+                <td>{{ discount.discount_name }}</td>
+                <td>+{{ discount.discount_percentage }}% {{ discount.valid_from }} - {{ discount.to }}</td>
+                <td>
+                    {% for i in discount.discounted_cars %}
+                        {{ i.brand }} {{ i.model }}
+                    {% endfor %}
+                </td>
+                <td><a href="{{ url_for('edit_priserise', id=discount.id) }}">Edit price rise</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+{% endblock %}
+</html>

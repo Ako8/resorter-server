@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Car Rental Form</title>
+</head>
+<body>
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    h2 {
+        color: #333333;
+    }
+</style>
+<div class="container mt-5">
+    <form class="p-4" method="post" action="{{ url_for('edit_car', id=car.id) }}" enctype="multipart/form-data">
+        <!-- Main Section -->
+        <h2>Main Section</h2>
+        <div class="border p-3 shadow-lg" style="display: flex; justify-content: space-between; gap: 5px">
+            <div class="mb-3">
+                <label for="brand" class="form-label">Brand</label>
+                <input type="text" value="{{ car.brand }}" class="form-control" name="brand" id="brand" required>
+            </div>
+            <div class="mb-3">
+                <label for="model" class="form-label">Model</label>
+                <input type="text" class="form-control" value="{{ car.model }}" name="model" id="model" required>
+            </div>
+            <div class="mb-3">
+                <label for="licensePlate" class="form-label">License Plate No</label>
+                <input type="text" class="form-control" name="licensePlate" value="{{ car.license_plate }}" id="licensePlate" required>
+            </div>
+            <div class="mb-3">
+                <label for="year" class="form-label">Year of Manufacture</label>
+                <input type="number" class="form-control" name="year" value="{{ car.year_of_manufacture }}" id="year" required>
+            </div>
+            <div class="mb-3">
+                <label for="bodyColor" class="form-label">Body Color</label>
+                <select class="form-select" name="bodyColor" id="bodyColor" required>
+                    <option value="white" {% if car.body_color == 'white'%} selected {% endif %}>White</option>
+                    <option value="black" {% if car.body_color == 'black'%} selected {% endif %}>Black</option>
+                    <option value="gray" {% if car.body_color == 'gray'%} selected {% endif %}>Gray</option>
+                    <option value="red" {% if car.body_color == 'red'%} selected {% endif %}>Red</option>
+                    <option value="blue" {% if car.body_color == 'blue'%} selected {% endif %}>Blue</option>
+                    <option value="green" {% if car.body_color == 'green' %} selected {% endif %}>Green</option>
+                    <option value="yellow" {% if car.body_color == 'yellow'%} selected {% endif %}>Yellow</option>
+                    <option value="brown" {% if car.body_color == 'brown'%} selected {% endif %}>Brown</option>
+                    <option value="beige" {% if car.body_color == 'beige'%} selected {% endif %}>Beige</option>
+                    <option value="orange" {% if car.body_color == 'orange'%} selected {% endif %}>Orange</option>
+                    <option value="silver" {% if car.body_color == 'silver'%} selected {% endif %}>Silver</option>
+                    <option value="skyblue" {% if car.body_color == 'skyblue'%} selected {% endif %}>Sky Blue</option>
+                    <option value="purple" {% if car.body_color == 'purple'%} selected {% endif %}>Purple</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="bodyType" class="form-label">Body Type</label>
+                <select class="form-select" name="bodyType" id="bodyType" required>
+                    <option value="sedan" {% if car.body_type == 'sedan'%} selected {% endif %} >Sedan</option>
+                    <option value="hatchback" {% if car.body_type == 'hatchback'%} selected {% endif %}>Hatchback</option>
+                    <option value="wagon" {% if car.body_type == 'wagon'%} selected {% endif %}>Wagon</option>
+                    <option value="minivan" {% if car.body_type == 'minivan'%} selected {% endif %}>Minivan</option>
+                    <option value="minibus" {% if car.body_type == 'minibus'%} selected {% endif %}>Minibus</option>
+                    <option value="crossover" {% if car.body_type == 'crossover'%} selected {% endif %}>Crossover</option>
+                    <option value="pickup" {% if car.body_type == 'pickup'%} selected {% endif %}>Pickup</option>
+                    <option value="cabriolet" {% if car.body_type == 'cabriolet'%} selected {% endif %}>Cabriolet</option>
+                    <option value="scooter" {% if car.body_type == 'scooter'%} selected {% endif %}>Scooter</option>
+                    <option value="motorcycle" {% if car.body_type == 'motorcycle'%} selected {% endif %}>Motorcycle</option>
+                    <option value="atv" {% if car.body_type == 'atv'%} selected {% endif %}>ATV</option>
+                    <option value="buggy" {% if car.body_type == 'buggy'%} selected {% endif %}>Buggy</option>
+                    <option value="coupe" {% if car.body_type == 'coupe'%} selected {% endif %}>Coupe</option>
+                </select>
+            </div>
+        </div>
+
+        <h2 class="mt-5">Price and conditions</h2>
+        <div class="border p-3 shadow-lg" style="display: flex; justify-content: space-between; gap: 5px">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th class="border" scope="col">#</th>
+                    {% for tariff in tariffs %}
+                    <th class="border" scope="col">days {{tariff.from_day}}..{{ tariff.to_day }}</th>
+                    {% endfor %}
+                    <th class="border" scope="col">31+</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for season in seasons %}
+                <tr>
+                    <th class="border" scope="row">{{ season.start_date.strftime('%d-%m') }}..{{
+                        season.end_date.strftime('%d-%m') }}
+                    </th>
+                    {% for tariff in tariffs %}
+                    <td class="border"><input name="{{ season.id }}{{ tariff.id }}" value="{{ prices[loop.index0] }}" class="form-control"
+                                              type="number" style="width: 70px"></td>
+                    {% endfor %}
+                    <td class="border"><input name="more" value="{{ prices[-1] }}" class="form-control" type="number"
+                                              style="width: 70px"></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Mileage Limit Section -->
+                <h2 class="mt-5">Mileage Limit Section</h2>
+                <div class="border p-3 shadow-lg">
+                    <div class="mb-3 form-check">
+                        <input {% if mileage_limit.unlimited %} checked {% endif %} type="checkbox" class="form-check-input" name="unlimited" id="unlimited">
+                        <label class="form-check-label" for="unlimited">Unlimited</label>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="limit" class="form-label">Limit (km/day)</label>
+                        <input value="{{ mileage_limit.limit }}" type="number" class="form-control" name="limit" id="limit">
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="overageFee" class="form-label">Overage Fee ($/km)</label>
+                        <input value="{{ mileage_limit.overage_fee }}" type="number" class="form-control" name="overageFee" id="overageFee">
+                    </div>
+                </div>
+
+                <!-- Insurance Section -->
+                <h2 class="mt-5">Insurance Section</h2>
+                <div class="border p-3 shadow-lg">
+                    <div class="mb-3 form-check">
+                        <input {% if insurance.franchise %} checked {% endif %} type="checkbox" class="form-check-input" name="franchise" id="franchise">
+                        <label class="form-check-label" for="franchise">Franchise</label>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="franchiseAmount" class="form-label">Franchise Amount ($)</label>
+                        <input type="number" class="form-control" value="{{ insurance.franchise_amount }}" name="franchiseAmount" id="franchiseAmount">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input {% if insurance.deposit %} checked {% endif %} type="checkbox" class="form-check-input" name="deposit" id="deposit">
+                        <label class="form-check-label" for="deposit">Deposit</label>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="depositAmount" class="form-label">Deposit Amount ($)</label>
+                        <input  value="{{ insurance.deposit_amount }}" type="number" class="form-control" name="depositAmount" id="depositAmount">
+                    </div>
+                </div>
+
+                <!-- Other Section -->
+                <h2 class="mt-5">Other Section</h2>
+                <div class="border p-3 shadow-lg">
+                    <div class="mb-3 col-md-6">
+                        <label for="requiredLicense" class="form-label">Required License</label>
+                        <select class="form-select" name="requiredLicense" id="requiredLicense">
+                            <option selected value="A">A</option>
+                            <option value="A1">A1</option>
+                            <option value="ABM">A or B or M</option>
+                            <option value="B">B</option>
+                            <option value="B1">B1</option>
+                            <option value="BE">BE</option>
+                            <option value="M">M</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="seats" class="form-label">Seats</label>
+                        <input type="number" value="2" class="form-control" name="seats" id="seats">
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="doors" class="form-label">Number of Doors</label>
+                        <select class="form-select" name="doors" id="doors">
+                            <option value="2">2</option>
+                            <option selected value="4">4</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="airConditioning" class="form-label">Air Conditioning</label>
+                        <select class="form-select" name="airConditioning" id="airConditioning">
+                            <option selected value="1Zone">1 Zone Climate Control</option>
+                            <option value="2Zone">2 Zone Climate Control</option>
+                            <option value="4Zone">4 Zone Climate Control</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="interior" class="form-label">Interior</label>
+                        <select class="form-select" name="interior" id="interior">
+                            <option selected value="fabric">Fabric</option>
+                            <option value="leather">Leather</option>
+                            <option value="sport">Sport</option>
+                            <option value="sportLeather">Sport Leather</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="roof" class="form-label">Roof</label>
+                        <select class="form-select" name="roof" id="roof">
+                            <option value="standard">Standard</option>
+                            <option selected value="sunroof">Sunroof</option>
+                            <option value="rigidFoldableAutomatic">Rigid Foldable Automatic</option>
+                            <option value="softFoldableManual">Soft Foldable Manual</option>
+                            <option value="softFoldableAutomatic">Soft Foldable Automatic</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="poweredWindows" class="form-label">Powered Windows</label>
+                        <select class="form-select" name="poweredWindows" id="poweredWindows">
+                            <option value="none">None</option>
+                            <option selected value="2">2</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="airbags" class="form-label">Airbags</label>
+                        <input value="2" type="number" class="form-control" name="airbags" id="airbags">
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="sideWheel" class="form-label">Side Wheel</label>
+                        <select class="form-select" name="sideWheel" id="sideWheel">
+                            <option selected value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6 form-check">
+                        <input checked type="checkbox" class="form-check-input" name="cruiseControl" id="cruiseControl">
+                        <label class="form-check-label" for="cruiseControl">Cruise Control</label>
+                    </div>
+                    <div class="mb-3 col-md-6 form-check">
+                        <input checked type="checkbox" class="form-check-input" name="rearViewCamera" id="rearViewCamera">
+                        <label class="form-check-label" for="rearViewCamera">Rear View Camera</label>
+                    </div>
+                    <div class="mb-3 col-md-6 form-check">
+                        <input type="checkbox" class="form-check-input" name="parkingAssist" id="parkingAssist">
+                        <label class="form-check-label" for="parkingAssist">Parking Assist</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- Engine Section -->
+                <h2 class="mt-5">Engine Section</h2>
+                <div class="border p-3 shadow-lg">
+                    <div class="mb-3 col-md-6">
+                        <label for="engineType" class="form-label">Engine Type</label>
+                        <input value="1.2" type="text" class="form-control" name="engineType" id="engineType">
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="horsepower" class="form-label">Horsepower</label>
+                        <input value="60" type="number" class="form-control" name="horsepower" id="horsepower">
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="fuel" class="form-label">Fuel</label>
+                        <select class="form-select" name="fuel" id="fuel">
+                            <option selected value="benzin">Benzin</option>
+                            <option value="dizel">Dizel</option>
+                            <option value="hybrid">Hybrid</option>
+                            <option value="turboDizel">Turbo Dizel</option>
+                            <option value="gaz">Gaz</option>
+                            <option value="electricity">Electricity</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="tankCapacity" class="form-label">Tank Capacity (l)</label>
+                        <input value="40" type="number" class="form-control" name="tankCapacity" id="tankCapacity">
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="fuelConsumption" class="form-label">Fuel Consumption (l/100 km)</label>
+                        <input value="11" type="number" class="form-control" name="fuelConsumption" id="fuelConsumption">
+                    </div>
+                </div>
+
+                <!-- Chassis Section -->
+                <h2 class="mt-5">Chassis Section</h2>
+                <div class="border p-3 shadow-lg">
+                    <div class="mb-3 col-md-6">
+                        <label for="transmission" class="form-label">Transmission</label>
+                        <select class="form-select" name="transmission" id="transmission">
+                            <option value="manual">Manual</option>
+                            <option selected value="automatic">Automatic</option>
+                            <option value="manualAutomatic">Manual + Automatic</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label for="drive" class="form-label">Drive</label>
+                        <select class="form-select" name="drive" id="drive">
+                            <option selected value="front wheel">Front Wheel</option>
+                            <option value="rear wheel">Rear Wheel</option>
+                            <option value="four wheel">4 Wheel</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6 form-check">
+                        <input checked type="checkbox" class="form-check-input" name="abs" id="abs">
+                        <label class="form-check-label" for="abs">ABS</label>
+                    </div>
+                    <div class="mb-3 col-md-6 form-check">
+                        <input checked type="checkbox" class="form-check-input" name="ebd" id="ebd">
+                        <label class="form-check-label" for="ebd">EBD</label>
+                    </div>
+                    <div class="mb-3 col-md-6 form-check">
+                        <input checked type="checkbox" class="form-check-input" name="esp" id="esp">
+                        <label class="form-check-label" for="esp">ESP</label>
+                    </div>
+                </div>
+
+                <!-- Music Section -->
+                <h2 class="mt-5">Music Section</h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem" class="border p-3 shadow-lg">
+                    <div class="form-check shadow-lg border border-secondary rounded"
+                         style="padding:10px 10px 10px 30px ">
+                        <input name="radio" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                               type="checkbox"
+                               id="radio"
+                               checked>
+                        <label class="form-check-label" style="margin-left: 10px" for="radio">
+                            Radio
+                        </label>
+                    </div>
+                    <div class="form-check shadow-lg border border-secondary rounded"
+                         style="padding:10px 10px 10px 30px ">
+                        <input name="aux" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                               type="checkbox"
+                               id="aux" checked>
+                        <label class="form-check-label" style="margin-left: 10px" for="aux">
+                            AUX
+                        </label>
+                    </div>
+                    <div class="form-check shadow-lg border border-secondary rounded"
+                         style="padding:10px 10px 10px 30px ">
+                        <input name="usb" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                               type="checkbox"
+                               id="usb">
+                        <label class="form-check-label" style="margin-left: 10px" for="usb">
+                            USB
+                        </label>
+                    </div>
+                    <div class="form-check shadow-lg border border-secondary rounded"
+                         style="padding:10px 10px 10px 30px ">
+                        <input name="mp3" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                               type="checkbox"
+                               id="mp3">
+                        <label class="form-check-label" style="margin-left: 10px" for="mp3">
+                            MP3
+                        </label>
+                    </div>
+                    <div class="form-check shadow-lg border border-secondary rounded"
+                         style="padding:10px 10px 10px 30px ">
+                        <input name="bluetooth" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                               type="checkbox"
+                               id="bluetooth">
+                        <label class="form-check-label" style="margin-left: 10px" for="bluetooth">
+                            Bluetooth
+                        </label>
+                    </div>
+                    <div class="form-check shadow-lg border border-secondary rounded"
+                         style="padding:10px 10px 10px 30px ">
+                        <input name="Audio-CD" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                               type="checkbox"
+                               id="Audio-CD">
+                        <label class="form-check-label" style="margin-left: 10px" for="Audio-CD">
+                            Audio-CD
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Images Section -->
+
+        <button type="submit" class="btn btn-primary mt-3 mb-5">edit car</button>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+{% endblock %}
+</html>
+

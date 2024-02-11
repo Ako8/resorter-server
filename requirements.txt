@@ -12,3 +12,7 @@ Pillow==9.5.0
 email-validator==2.1.0.post1
 Werkzeug==2.2.2
 gunicorn
+
+wtforms~=3.1.2
+SQLAlchemy~=2.0.25
+alembic~=1.13.1

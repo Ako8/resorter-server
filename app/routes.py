@@ -1,13 +1,15 @@
 import base64
 import json
+from datetime import datetime
 
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
-from sqlalchemy import or_, not_, and_
+from sqlalchemy import or_, not_
 
 from app import app, db, bcrypt
 from app.forms import RegistrationForm, LoginForm
-from app.models import User, Order, FlatOrder, Car, Flat, Region, Location, Activity, FlatType
+from app.models import User, Order, FlatOrder, Car, Tariff, Season, \
+    Delivery, Discount
 
 
 @app.route("/")
@@ -25,7 +27,17 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, email=form.email.data, password=hashed_password)
+        working_days = {
+            "monday": True,
+            "tuesday": True,
+            "wednesday": True,
+            "thursday": True,
+            "friday": True,
+            "saturday": True,
+            "sunday": True
+        }
+        user = User(company_name=form.username.data, email=form.email.data, password=hashed_password,
+                    working_days=working_days, payment_methods=[], public_holidays=[])
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You are now able to log in', 'success')
@@ -56,131 +68,6 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route("/dashboard/flats/add", methods=["POST", "GET"])
-@login_required
-def upload_flat():
-    regions = Region.query.all()
-    flat_types = FlatType.query.all()
-    if request.method == "POST":
-        images = request.files.getlist('images')
-        region_id = request.form.get('region')
-        rental_type_id = request.form.get('flat_type')
-        name = request.form.get('name')
-        location = request.form.get('location')
-        overview = request.form.get('overview')
-        day_price = request.form.get('day_price')
-        map = request.form.get('map')
-
-        flat = Flat(name=name,
-                    location=location,
-                    overview=overview,
-                    day_price=day_price,
-                    map=map,
-                    flat_type_id=rental_type_id,
-                    region_id=region_id,
-                    flat_owner_id=current_user.id)
-
-        images_data = []
-        for image_file in images:
-            image_data = base64.b64encode(image_file.read()).decode('utf-8')
-            images_data.append(image_data)
-
-        flat.images = json.dumps({"images": images_data})
-
-        db.session.add(flat)
-        db.session.commit()
-        return redirect(url_for("manage_flats"))
-
-    return render_template("add_flats.html", regions=regions, flat_types=flat_types)
-
-
-@app.route('/dashboard/cars/add', methods=['GET', 'POST'])
-@login_required
-def upload_car():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        image = request.files.get('image')
-        images = request.files.getlist('images')
-        gear_box = request.form.get('gearbox')
-        overview = request.form.get('overview')
-        car_type = request.form.get('car_type')
-        rent_price = request.form.get('rent_price')
-        for_rent = request.form.get('for_rent')
-
-        car_data = {
-            "gearbox": request.form.get('gearbox'),
-            "engine": request.form['engine'],
-            "year of manufacture": int(request.form['year_of_manufacture']),
-            "audio system": request.form['audio_system'],
-            "number of seats": int(request.form['number_of_seats']),
-            "drive": request.form.get('drive'),
-            "power": request.form['power'],
-            "airbags": request.form['airbags'],
-            "air conditioning": request.form['air_conditioning'],
-            "roof": request.form['roof'],
-            "tank": request.form['tank'],
-            "fuel": request.form['fuel'],
-            "wheel side": request.form.get('wheel_side'),
-            "consumption": request.form['consumption'],
-            "interior": request.form['interior'],
-            "power windows": request.form['power_windows'],
-            "abs": "Yes" if request.form.get('abs') == "on" else "No",
-            "ebd": "Yes" if request.form.get('ebd') == "on" else "No",
-            "esp": "Yes" if request.form.get('esp') == "on" else "No",
-            "cruise control": "Yes" if request.form.get('cruise_control') == "on" else "No",
-            "parking assist": "Yes" if request.form.get('parking_assist') == "on" else "No",
-            "rear view camera": "Yes" if request.form.get('rear_view_camera') == "on" else "No",
-        }
-
-        thumbnail = base64.b64encode(image.read()).decode('utf-8')
-
-        images_data = []
-        for image_file in images:
-            image_data = base64.b64encode(image_file.read()).decode('utf-8')
-            images_data.append(image_data)
-
-        images = {"thumbnail": thumbnail, "images": images_data}
-
-        car = Car(
-            name=name,
-            images=json.dumps(images),
-            gear_box=gear_box,
-            overview=overview,
-            car_type=car_type,
-            specifications=json.dumps(car_data),
-            rent_price=rent_price,
-            for_rent=for_rent,
-            owner_id=current_user.id
-        )
-
-        db.session.add(car)
-        db.session.commit()
-
-        return redirect(url_for("manage_cars"))
-
-    return render_template('add_cars.html')
-
-
-@app.route("/dashboard/delete/car-ord/<int:id>")
-@login_required
-def car_ord_delete(id):
-    order = Order.query.get(id)
-    db.session.delete(order)
-    db.session.commit()
-
-    return redirect(url_for("dashboard"))
-
-
-@app.route("/dashboard/delete/flat-ord/<int:id>")
-@login_required
-def flat_ord_delete(id):
-    order = FlatOrder.query.get(id)
-    db.session.delete(order)
-    db.session.commit()
-
-    return redirect(url_for("dashboard"))
-
-
 @app.route("/dashboard/cars", methods=['POST', 'GET'])
 @login_required
 def manage_cars():
@@ -196,69 +83,10 @@ def manage_cars():
                     cars = [Car.query.get(int(keyword))]
             elif search_by == "owner":
                 cars = Car.query.filter_by(owner=keyword).all()
-            elif search_by == "for_rent":
-                cars = Car.query.filter_by(for_rent=str(keyword)).all()
         except:
             flash("არასწორი მონაცემები")
 
     return render_template("manage_cars.html", cars=cars)
-
-
-@app.route("/dashboard/cars/edit/<int:id>", methods=['POST', 'GET'])
-@login_required
-def edit_cars(id):
-    car = Car.query.get(id)
-    specs = json.loads(car.specifications)
-    car_images = json.loads(car.images)
-
-    car_orders = Order.query.filter_by(car_id=id, order_owner=True)
-
-    if request.method == "POST":
-        car.name = request.form.get('name')
-        car.gear_box = request.form.get('gearbox')
-        car.overview = request.form.get('overview')
-        car.car_type = request.form.get('car_type')
-        car.rent_price = request.form.get('rent_price')
-        car.for_rent = request.form.get('for_rent')
-
-        car_data = {
-            "gearbox": request.form.get('gearbox'),
-            "engine": request.form.get('engine'),
-            "year of manufacture": int(request.form.get('year_of_manufacture')),
-            "audio system": request.form.get('audio_system'),
-            "number of seats": int(request.form['number_of_seats']),
-            "drive": request.form.get('drive'),
-            "power": request.form['power'],
-            "airbags": request.form['airbags'],
-            "air conditioning": request.form['air_conditioning'],
-            "roof": request.form['roof'],
-            "tank": request.form['tank'],
-            "fuel": request.form['fuel'],
-            "wheel side": request.form.get('wheel_side'),
-            "consumption": request.form['consumption'],
-            "interior": request.form['interior'],
-            "power windows": request.form['power_windows'],
-            "abs": "Yes" if request.form.get('abs') == "on" else "No",
-            "ebd": "Yes" if request.form.get('ebd') == "on" else "No",
-            "esp": "Yes" if request.form.get('esp') == "on" else "No",
-            "cruise control": "Yes" if request.form.get('cruise_control') == "on" else "No",
-            "parking assist": "Yes" if request.form.get('parking_assist') == "on" else "No",
-            "rear view camera": "Yes" if request.form.get('rear_view_camera') == "on" else "No",
-        }
-
-        car.specifications = json.dumps(car_data)
-
-        image = request.files.get('image')
-        delimage = request.form.get("delimage") == "on"
-        if delimage:
-            image_data = base64.b64encode(image.read()).decode('utf-8')
-            car.image = image_data
-
-        db.session.commit()
-
-        return redirect(url_for('manage_cars'))
-
-    return render_template("edit_cars.html", car_orders=car_orders, car=car, specs=specs, car_images=car_images)
 
 
 @app.route("/dashboard/cars/delete/<int:id>")
@@ -269,238 +97,6 @@ def delete_car(id):
     db.session.commit()
 
     return redirect(url_for("manage_cars"))
-
-
-@app.route("/dashboard/flats", methods=['POST', 'GET'])
-@login_required
-def manage_flats():
-    flats = Flat.query.all()
-
-    if request.method == 'POST':
-        search_by = request.form.get("search")
-        keyword = request.form.get("field")
-
-        try:
-            if search_by == "id":
-                if Flat.query.get(int(keyword)) is not None:
-                    flats = [Flat.query.get(int(keyword))]
-            elif search_by == "owner":
-                flats = Flat.query.filter_by(flat_owner=keyword).all()
-        except:
-            flash("არასწორი მონაცემები")
-
-    return render_template("manage_flats.html", flats=flats)
-
-
-@app.route("/dashboard/flats/delete/<int:id>")
-@login_required
-def delete_flat(id):
-    flat = Flat.query.get(id)
-    db.session.delete(flat)
-    db.session.commit()
-
-    return redirect(url_for("manage_flats"))
-
-
-@app.route("/dashboard/flats/edit/<int:id>", methods=['POST', 'GET'])
-@login_required
-def edit_flat(id):
-    flat = Flat.query.get(id)
-    flat_images = json.loads(flat.images)
-    flat_orders = FlatOrder.query.filter_by(flat_id=id)
-    regions = Region.query.all()
-    flat_types = FlatType.query.all()
-
-    if request.method == 'POST':
-        images = request.files.getlist('images')
-        flat.name = request.form.get("name")
-        flat.location = request.form.get("location")
-        flat.region_id = request.form.get("region")
-        flat.flat_type_id = request.form.get("flat_type")
-        flat.map = request.form.get("map")
-        flat.day_price = request.form.get("day_price")
-        flat.overview = request.form.get("overview")
-
-        delimage = request.form.get("delimage") == "on"
-        if delimage:
-            images_data = []
-            for image_file in images:
-                image_data = base64.b64encode(image_file.read()).decode('utf-8')
-                images_data.append(image_data)
-
-            flat.images = json.dumps({"images": images_data})
-
-        db.session.commit()
-
-        return redirect(url_for('manage_flats'))
-
-    return render_template("edit_flats.html", flat_types=flat_types, flat=flat, flat_orders=flat_orders,
-                           regions=regions, flat_images=flat_images)
-
-
-@app.route("/dashboard/regions")
-@login_required
-def manage_regions():
-    regions = Region.query.all()
-    return render_template("manage_regions.html", regions=regions)
-
-
-@app.route("/dashboard/regions/edit/<int:id>", methods=["POST", 'GET'])
-@login_required
-def edit_regions(id):
-    region = Region.query.get(id)
-    region_images = json.loads(region.images)
-    if request.method == "POST":
-        images = request.files.getlist('images')
-
-        region.name = request.form.get("name")
-        region.video = request.form.get("video")
-        region.article_one = request.form.get("aone")
-        region.article_two = request.form.get("atwo")
-        region.article_three = request.form.get("athree")
-
-        delimage = request.form.get("delimage") == "on"
-        if delimage:
-            images_data = []
-            for image_file in images:
-                image_data = base64.b64encode(image_file.read()).decode('utf-8')
-                images_data.append(image_data)
-
-            region_images["images"] = images_data
-            region.images = json.dumps(region_images)
-
-        db.session.commit()
-
-        return redirect(url_for("manage_regions"))
-
-    return render_template("edit_regions.html", region=region, region_images=region_images)
-
-
-@app.route("/dashboard/regions/add", methods=["POST", "GET"])
-@login_required
-def add_regions():
-    if request.method == "POST":
-        name = request.form.get("name")
-        thumbnail_image = request.files.get('image')
-        images = request.files.getlist('images')
-        video = request.form.get("video")
-        article_one = request.form.get("aone")
-        article_two = request.form.get("atwo")
-        article_three = request.form.get("athree")
-
-        thumbnail = base64.b64encode(thumbnail_image.read()).decode('utf-8')
-
-        images_data = []
-        for image_file in images:
-            image_data = base64.b64encode(image_file.read()).decode('utf-8')
-            images_data.append(image_data)
-
-        images = {"thumbnail": thumbnail, "images": images_data}
-
-        new_region = Region(
-            name=name,
-            images=json.dumps(images),
-            video=video,
-            article_one=article_one,
-            article_two=article_two,
-            article_three=article_three
-        )
-
-        db.session.add(new_region)
-        db.session.commit()
-
-        return redirect(url_for("manage_regions"))
-
-    return render_template("add_regions.html")
-
-
-@app.route("/dashboard/regions/delete/<int:id>")
-@login_required
-def delete_region(id):
-    region = Region.query.get(id)
-    db.session.delete(region)
-    db.session.commit()
-    return redirect(url_for("manage_regions"))
-
-
-@app.route("/dashboard/blogs")
-@login_required
-def manage_blogs():
-    blogs = Location.query.all()
-    return render_template("manage_blogs.html", blogs=blogs)
-
-
-@app.route("/dashboard/blogs/add", methods=["POST", "GET"])
-@login_required
-def add_blogs():
-    regions = Region.query.all()
-    if request.method == "POST":
-        name = request.form.get("name")
-        images = request.files.getlist('images')
-        overview = request.form.get("overview")
-        place_type = request.form.get("place_type")
-        region_id = request.form.get("region")
-        map = request.form.get("map")
-
-        images_data = []
-        for image_file in images:
-            image_data = base64.b64encode(image_file.read()).decode('utf-8')
-            images_data.append(image_data)
-
-        new_blog = Location(
-            name=name,
-            images=json.dumps({"images": images_data}),
-            overview=overview,
-            place_type=place_type,
-            region_id=region_id,
-            map=map,
-        )
-
-        db.session.add(new_blog)
-        db.session.commit()
-
-        return redirect(url_for("manage_blogs"))
-
-    return render_template("add_blogs.html", regions=regions)
-
-
-@app.route("/dashboard/blogs/edit/<int:id>", methods=["POST", "GET"])
-@login_required
-def edit_blogs(id):
-    blog = Location.query.get(id)
-    blog_images = json.loads(blog.images)
-
-    if request.method == "POST":
-        images = request.files.getlist('images')
-        blog.name = request.form.get("name")
-        blog.overview = request.form.get("overview")
-        blog.place_type = request.form.get("place_type")
-        blog.map = request.form.get("map")
-        blog.region_id = request.form.get("region")
-
-        delimage = request.form.get("delimage") == "on"
-        if delimage:
-            images_data = []
-            for image_file in images:
-                image_data = base64.b64encode(image_file.read()).decode('utf-8')
-                images_data.append(image_data)
-
-            blog.images = json.dumps({"images": images_data})
-
-        db.session.commit()
-        return redirect(url_for("manage_blogs"))
-
-    return render_template("edit_blogs.html", blog=blog, blog_images=blog_images)
-
-
-@app.route("/dashboard/blogs/delete/<int:id>")
-@login_required
-def delete_blog(id):
-    blog = Location.query.get(id)
-    db.session.delete(blog)
-    db.session.commit()
-
-    return redirect(url_for("manage_blogs"))
 
 
 @app.route("/dashboard/users")
@@ -535,55 +131,746 @@ def edit_user(id):
     return render_template("edit_users.html", user=user)
 
 
-@app.route("/dashboard/activity-log/")
-@login_required
-def activity():
-    activity = Activity.query.all()
-    return render_template("activity_log.html", activity=activity)
-
-
-@app.route("/dashboard/activity-log/history/<int:id>")
-@login_required
-def activity_history(id):
-    act = Activity.query.get(id)
-    history = json.loads(act.history)
-    return render_template("activity_history.html", act=act, history=history[::-1])
-
-
 # API #################################################
-def generate_car_json(cars):
-    car_info = []
-    for car in cars:
-        owner = str(car.owner)
-        car_json = {
-            "id": car.id,
-            "name": car.name,
-            "images": json.loads(car.images),
-            "gear_box": car.gear_box,
-            "overview": car.overview,
-            "car_type": car.car_type,
-            "rent_price": car.rent_price,
-            "for_rent": car.for_rent,
-            "owner": owner,
-            "specs": json.loads(car.specifications),
+@app.route('/add_car', methods=['GET', 'POST'])
+@login_required
+def add_car():
+    tariffs = Tariff.query.filter_by(tariff_owner_id=current_user.id)
+    seasons = Season.query.filter_by(season_owner_id=current_user.id)
+    if request.method == 'POST':
+        # Main Section
+        brand = request.form.get('brand')
+        model = request.form.get('model')
+        license_plate = request.form.get('licensePlate')
+        year_of_manufacture = request.form.get('year')
+        body_color = request.form.get('bodyColor')
+        body_type = request.form.get('bodyType')
+
+        # Mileage Limit Section
+        unlimited = 'unlimited' in request.form
+        limit = request.form.get('limit')
+        overage_fee = request.form.get('overageFee')
+
+        mileage_limit = {
+            "unlimited": unlimited,
+            "limit": limit,
+            "overage_fee": overage_fee
         }
-        car_info.append(car_json)
 
-    return car_info
+        # Music section
+        radio = "radio" in request.form
+        aux = "aux" in request.form
+        bluetooth = "bluetooth" in request.form
+        audio_cd = "Audio-CD" in request.form
+        usb = "usb" in request.form
+        mp = "mp3" in request.form
+
+        music = {
+            "radio": radio,
+            "aux": aux,
+            "bluetooth": bluetooth,
+            "audio_cd": audio_cd,
+            "usb": usb,
+            "mp3": mp
+        }
+
+        # Insurance Section
+        franchise = 'franchise' in request.form
+        franchise_amount = request.form.get('franchiseAmount')
+        deposit = 'deposit' in request.form
+        deposit_amount = request.form.get('depositAmount')
+
+        insurance = {
+            "franchise": franchise,
+            "franchise_amount": franchise_amount,
+            "deposit": deposit,
+            "deposit_amount": deposit_amount
+        }
+
+        # Engine Section
+        engine_type = request.form.get('engineType')
+        horsepower = request.form.get('horsepower')
+        fuel = request.form.get('fuel')
+        tank_capacity = request.form.get('tankCapacity')
+        fuel_consumption = request.form.get('fuelConsumption')
+
+        engine = {
+            "engine_type": engine_type,
+            "horsepower": horsepower,
+            "fuel": fuel,
+            "tank_capacity": tank_capacity,
+            "fuel_consumption": fuel_consumption
+        }
+
+        # Chassis Section
+        transmission = request.form.get('transmission')
+        drive = request.form.get('drive')
+        abs_check = 'abs' in request.form
+        ebd = 'ebd' in request.form
+        esp = 'esp' in request.form
+
+        chassis = {
+            "transmission": transmission,
+            "drive": drive,
+            "abs": abs_check,
+            "ebd": ebd,
+            "esp": esp
+        }
+
+        # Other Section
+        required_license = request.form.get('requiredLicense')
+        seats = request.form.get('seats')
+        doors = request.form.get('doors')
+        air_conditioning = request.form.get('airConditioning')
+        interior = request.form.get('interior')
+        roof = request.form.get('roof')
+        powered_windows = request.form.get('poweredWindows')
+        airbags = request.form.get('airbags')
+        side_wheel = request.form.get('sideWheel')
+        cruise_control = 'cruiseControl' in request.form
+        rear_view_camera = 'rearViewCamera' in request.form
+        parking_assist = 'parkingAssist' in request.form
+
+        specs = {
+            "required_license": required_license,
+            "seats": seats,
+            "doors": doors,
+            "air_conditioning": air_conditioning,
+            "interior": interior,
+            "roof": roof,
+            "powered_windows": powered_windows,
+            "airbags": airbags,
+            "side_wheel": side_wheel,
+            "cruise_control": cruise_control,
+            "rear_view_camera": rear_view_camera,
+            "parking_assist": parking_assist
+        }
+
+        # Images Section
+        car_images = request.files.getlist('carImages')
+        registration_certificate = request.files.getlist('registrationCertificate')
+
+        registration_certificate_data = []
+        for image_file in registration_certificate:
+            image_data = base64.b64encode(image_file.read()).decode('utf-8')
+            registration_certificate_data.append(image_data)
+
+        images_data = []
+        for image_file in car_images:
+            image_data = base64.b64encode(image_file.read()).decode('utf-8')
+            images_data.append(image_data)
+
+        gallery = {"images": images_data}
+        registration_certificate = {"images": registration_certificate_data}
+
+        price_conditions = []
+        for season in seasons:
+            for tariff in tariffs:
+                input_name = f"{season.id}{tariff.id}"
+                price = int(request.form.get(input_name, 0))
+                con = {"season_id": season.id, "tariff_id": tariff.id, "price": price}
+                price_conditions.append(con)
+
+            more_input_name = "more"
+            more_price = int(request.form.get(more_input_name, 0))
+            mcon = {"season_id": season.id, "tariff_id": None, "price": more_price}
+            price_conditions.append(mcon)
+
+        car = Car(
+            registration_certificate=json.dumps(registration_certificate),
+            gallery=json.dumps(gallery),
+            brand=brand,
+            model=model,
+            license_plate=license_plate,
+            year_of_manufacture=year_of_manufacture,
+            body_color=body_color,
+            body_type=body_type,
+            price_conditions=json.dumps(price_conditions),
+            mileage_limit=json.dumps(mileage_limit),
+            insurance=json.dumps(insurance),
+            engine=json.dumps(engine),
+            chassis=json.dumps(chassis),
+            specs=json.dumps(specs),
+            music=music,
+            owner_id=current_user.id
+        )
+
+        db.session.add(car)
+        db.session.commit()
+
+    return render_template('test_add_car.html', tariffs=tariffs, seasons=seasons)
 
 
-def filtered_rent_cars(orders, start_date, end_date, min_price, max_price):
-    car_types = [
-        ("sedan", 'სედანი'),
-        ("jeep", 'ჯიპი'),
-        ("hetchback", 'ჰეტჩბექი'),
-        ("cupe", 'კუპე'),
-        ("kabrioleti", 'კაბრიოლეტი'),
-        ("pickapi", 'პიკაპი'),
-        ("miniveni", 'მინივენი')
-    ]
+@app.route('/edit_car/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_car(id):
+    car = Car.query.get(id)
+    price_conditions = json.loads(car.price_conditions)
+    prices = []
+    for pc in price_conditions:
+        prices.append(pc["price"])
+    tariffs = Tariff.query.filter_by(tariff_owner_id=current_user.id)
+    seasons = Season.query.filter_by(season_owner_id=current_user.id)
 
-    gear_box_types = [('manual', 'მექანიკა'), ('automatic', 'ავტომატიკა')]
+    if request.method == 'POST':
+        # Main Section
+        brand = request.form.get('brand')
+        model = request.form.get('model')
+        license_plate = request.form.get('licensePlate')
+        year_of_manufacture = request.form.get('year')
+        body_color = request.form.get('bodyColor')
+        body_type = request.form.get('bodyType')
+
+        # Mileage Limit Section
+        unlimited = 'unlimited' in request.form
+        limit = request.form.get('limit')
+        overage_fee = request.form.get('overageFee')
+
+        mileage_limit = {
+            "unlimited": unlimited,
+            "limit": limit,
+            "overage_fee": overage_fee
+        }
+
+        # Music section
+        radio = "radio" in request.form
+        aux = "aux" in request.form
+        bluetooth = "bluetooth" in request.form
+        audio_cd = "Audio-CD" in request.form
+        usb = "usb" in request.form
+        mp = "mp3" in request.form
+
+        music = {
+            "radio": radio,
+            "aux": aux,
+            "bluetooth": bluetooth,
+            "audio_cd": audio_cd,
+            "usb": usb,
+            "mp3": mp
+        }
+
+        # Insurance Section
+        franchise = 'franchise' in request.form
+        franchise_amount = request.form.get('franchiseAmount')
+        deposit = 'deposit' in request.form
+        deposit_amount = request.form.get('depositAmount')
+
+        insurance = {
+            "franchise": franchise,
+            "franchise_amount": franchise_amount,
+            "deposit": deposit,
+            "deposit_amount": deposit_amount
+        }
+
+        # Engine Section
+        engine_type = request.form.get('engineType')
+        horsepower = request.form.get('horsepower')
+        fuel = request.form.get('fuel')
+        tank_capacity = request.form.get('tankCapacity')
+        fuel_consumption = request.form.get('fuelConsumption')
+
+        engine = {
+            "engine_type": engine_type,
+            "horsepower": horsepower,
+            "fuel": fuel,
+            "tank_capacity": tank_capacity,
+            "fuel_consumption": fuel_consumption
+        }
+
+        # Chassis Section
+        transmission = request.form.get('transmission')
+        drive = request.form.get('drive')
+        abs_check = 'abs' in request.form
+        ebd = 'ebd' in request.form
+        esp = 'esp' in request.form
+
+        chassis = {
+            "transmission": transmission,
+            "drive": drive,
+            "abs": abs_check,
+            "ebd": ebd,
+            "esp": esp
+        }
+
+        # Other Section
+        required_license = request.form.get('requiredLicense')
+        seats = request.form.get('seats')
+        doors = request.form.get('doors')
+        air_conditioning = request.form.get('airConditioning')
+        interior = request.form.get('interior')
+        roof = request.form.get('roof')
+        powered_windows = request.form.get('poweredWindows')
+        airbags = request.form.get('airbags')
+        side_wheel = request.form.get('sideWheel')
+        cruise_control = 'cruiseControl' in request.form
+        rear_view_camera = 'rearViewCamera' in request.form
+        parking_assist = 'parkingAssist' in request.form
+
+        specs = {
+            "required_license": required_license,
+            "seats": seats,
+            "doors": doors,
+            "air_conditioning": air_conditioning,
+            "interior": interior,
+            "roof": roof,
+            "powered_windows": powered_windows,
+            "airbags": airbags,
+            "side_wheel": side_wheel,
+            "cruise_control": cruise_control,
+            "rear_view_camera": rear_view_camera,
+            "parking_assist": parking_assist
+        }
+
+        price_conditions = []
+        for season in seasons:
+            for tariff in tariffs:
+                input_name = f"{season.id}{tariff.id}"
+                price = int(request.form.get(input_name, 0))
+                con = {"season_id": season.id, "tariff_id": tariff.id, "price": price}
+                price_conditions.append(con)
+
+            more_input_name = "more"
+            more_price = int(request.form.get(more_input_name, 0))
+            mcon = {"season_id": season.id, "tariff_id": None, "price": more_price}
+            price_conditions.append(mcon)
+
+        car.brand = brand
+        car.model = model
+        car.license_plate = license_plate
+        car.year_of_manufacture = year_of_manufacture
+        car.body_color = body_color
+        car.body_type = body_type
+        car.price_conditions = json.dumps(price_conditions)
+        car.mileage_limit = json.dumps(mileage_limit)
+        car.insurance = json.dumps(insurance)
+        car.engine = json.dumps(engine)
+        car.chassis = json.dumps(chassis)
+        car.specs = json.dumps(specs)
+        car.music = json.dumps(music)
+        car.owner_id = current_user.id
+
+        db.session.add(car)
+        db.session.commit()
+
+    return render_template('test_edit_car.html', mileage_limit=json.loads(car.mileage_limit), car=car, tariffs=tariffs,
+                           seasons=seasons, prices=prices, insurance=json.loads(car.insurance))
+
+
+@app.route("/settings", methods=["POST", "GET"])
+@login_required
+def settings():
+    user = User.query.get(current_user.id)
+    tariffs = Tariff.query.filter_by(tariff_owner_id=user.id).order_by(Tariff.from_day)
+    seasons = Season.query.filter_by(season_owner_id=user.id)
+    if request.method == 'POST':
+        company_name = request.form.get('companyName')
+        legal_name = request.form.get('legalName')
+        phone = request.form.get('phone')
+        second_phone = request.form.get('secondPhone')
+        country = request.form.get('country')
+        email = request.form.get('email')
+
+        # Working Days Section
+        monday = 'monday' in request.form
+        tuesday = 'tuesday' in request.form
+        wednesday = 'wednesday' in request.form
+        thursday = 'thursday' in request.form
+        friday = 'friday' in request.form
+        saturday = 'saturday' in request.form
+        sunday = 'sunday' in request.form
+
+        working_days = {
+            "monday": monday,
+            "tuesday": tuesday,
+            "wednesday": wednesday,
+            "thursday": thursday,
+            "friday": friday,
+            "saturday": saturday,
+            "sunday": sunday
+        }
+
+        # Payment for Rent Section
+        cash = 'cash' in request.form
+        visa = 'visa' in request.form
+        master_card = 'masterCard' in request.form
+
+        payment_methods = {
+            "cash": cash,
+            "visa": visa,
+            "master_card": master_card
+        }
+
+        user.email = email
+        user.company_name = company_name
+        user.business_name = legal_name
+        user.phone = phone
+        user.second_phone = second_phone
+        user.country = country
+        user.payment_methods = json.dumps(payment_methods)
+        user.working_days = json.dumps(working_days)
+
+        db.session.commit()
+
+    return render_template("test_settings.html", user=user, working_days=json.loads(user.working_days),
+                           payment_methods=json.loads(user.payment_methods),
+                           public_days=json.loads(user.public_holidays), tariffs=tariffs, seasons=seasons)
+
+
+@app.route("/add_public_day", methods=["POST", "GET"])
+@login_required
+def add_public_day():
+    user = User.query.get(current_user.id)
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        date = request.form.get("date")
+        day = [{"name": name, "date": date}]
+        days = json.loads(user.public_holidays)
+        days.extend(day)
+
+        user.public_holidays = json.dumps(days)
+        db.session.commit()
+
+    return redirect("settings")
+
+
+@app.route("/delete_public_day/<date>", methods=["POST", "GET"])
+@login_required
+def delete_public_day(date):
+    user = User.query.get(current_user.id)
+    days = json.loads(user.public_holidays)
+    for day in days:
+        if day["date"] == date:
+            days.remove(day)
+            break
+
+    user.public_holidays = json.dumps(days)
+    db.session.commit()
+    return redirect(url_for("settings"))
+
+
+@app.route("/add_tariff", methods=["POST", "GET"])
+@login_required
+def add_tariff():
+    if request.method == "POST":
+        start_day = request.form.get("start_day")
+        end_day = request.form.get("end_day")
+
+        new_tariff = Tariff(
+            from_day=start_day,
+            to_day=end_day,
+            tariff_owner_id=current_user.id
+        )
+
+        db.session.add(new_tariff)
+        db.session.commit()
+
+    return redirect(url_for("settings"))
+
+
+@app.route("/delete_tarrif/<int:id>")
+@login_required
+def delete_tarrif(id):
+    tariff = Tariff.query.get(id)
+    db.session.delete(tariff)
+    db.session.commit()
+    return redirect(url_for("settings"))
+
+
+@app.route("/add_season", methods=["POST", "GET"])
+@login_required
+def add_season():
+    if request.method == "POST":
+        start_date_str = request.form.get("start_date")
+        end_date_str = request.form.get("end_date")
+
+        date_format = "%Y-%m-%d"
+        start_date = datetime.strptime(start_date_str, date_format)
+        end_date = datetime.strptime(end_date_str, date_format)
+
+        new_season = Season(
+            start_date=start_date,
+            end_date=end_date,
+            season_owner_id=current_user.id
+        )
+        db.session.add(new_season)
+        db.session.commit()
+
+    return redirect(url_for("settings"))
+
+
+@app.route("/delete_season/<int:id>")
+@login_required
+def delete_season(id):
+    season = Season.query.get(id)
+    db.session.delete(season)
+    db.session.commit()
+    return redirect(url_for("settings"))
+
+
+@app.route("/delivery", methods=["POST", "GET"])
+@login_required
+def delivery():
+    user = User.query.get(current_user.id)
+    delivery_entries = Delivery.query.filter_by(delivery_owner_id=current_user.id).all()
+
+    if request.method == 'POST':
+        for entry in delivery_entries:
+            entry.price = request.form.get(f'price_{entry.id}')
+            entry.free_from = request.form.get(f'free_from_{entry.id}')
+            hour = request.form.get(f'hour_{entry.id}')
+            minute = request.form.get(f'minute_{entry.id}')
+            entry.delivery_time = f"{hour}:{minute}"
+            db.session.commit()
+
+    return render_template("delivery.html", user=user, deliverys=delivery_entries)
+
+
+@app.route("/add_delivery", methods=["POST", "GET"])
+@login_required
+def add_delivery():
+    if request.method == "POST":
+        city = request.form.get("city")
+        new_delivery = Delivery(
+            city=city,
+            delivery_owner_id=current_user.id
+        )
+        db.session.add(new_delivery)
+        db.session.commit()
+
+        return redirect(url_for("delivery"))
+
+
+@app.route("/delete_delivery/<int:id>")
+@login_required
+def delete_delivery(id):
+    delivery = Delivery.query.get(id)
+    db.session.delete(delivery)
+    db.session.commit()
+    return redirect(url_for("delivery"))
+
+
+@app.route("/discounts")
+@login_required
+def discounts():
+    user = User.query.get(current_user.id)
+    price_rise = Discount.query.filter_by(rise_or_disc=True)
+    discounts = Discount.query.filter_by(rise_or_disc=False)
+    cars = Car.query.filter_by(owner_id=current_user.id)
+    return render_template("discounts.html", cars=cars, user=user, price_rise=price_rise, discounts=discounts)
+
+
+@app.route("/discounts/add_discount", methods=["POST", "GET"])
+@login_required
+def add_discount():
+    cars = Car.query.filter_by(owner_id=current_user.id)
+    if request.method == 'POST':
+        discount_name = request.form.get('discountName')
+        start_date_str = request.form.get('validFrom')
+        end_date_str = request.form.get('validTo')
+        discount_percentage = request.form.get('discountPercentage')
+
+        date_format = "%Y-%m-%d"
+        valid_from = datetime.strptime(start_date_str, date_format)
+        valid_to = datetime.strptime(end_date_str, date_format)
+
+        new_discount = Discount(
+            discount_name=discount_name,
+            discount_percentage=discount_percentage,
+            valid_from=valid_from,
+            to=valid_to,
+            rise_or_disc=False,
+            discount_owner_id=current_user.id
+        )
+
+        db.session.add(new_discount)
+
+        for car in cars:
+            selected_car = f'{car.id}' in request.form
+            if selected_car:
+                car.discounts.append(new_discount)
+
+        db.session.commit()
+
+        return redirect(url_for("discounts"))
+
+    return render_template("add_discount.html", cars=cars)
+
+
+@app.route("/discounts/add_pricerise", methods=["POST", "GET"])
+@login_required
+def add_pricerise():
+    cars = Car.query.filter_by(owner_id=current_user.id)
+    if request.method == 'POST':
+        discount_name = request.form.get('discountName')
+        start_date_str = request.form.get('validFrom')
+        end_date_str = request.form.get('validTo')
+        discount_percentage = request.form.get('discountPercentage')
+
+        date_format = "%Y-%m-%d"
+        valid_from = datetime.strptime(start_date_str, date_format)
+        valid_to = datetime.strptime(end_date_str, date_format)
+
+        new_discount = Discount(
+            discount_name=discount_name,
+            discount_percentage=discount_percentage,
+            valid_from=valid_from,
+            to=valid_to,
+            rise_or_disc=True,
+            discount_owner_id=current_user.id
+        )
+
+        db.session.add(new_discount)
+
+        for car in cars:
+            selected_car = f'{car.id}' in request.form
+            if selected_car:
+                car.discounts.append(new_discount)
+
+        db.session.commit()
+
+        return redirect(url_for("discounts"))
+
+    return render_template("add_pricerise.html", cars=cars)
+
+
+@app.route("/discounts/edit_discount/<int:id>", methods=["POST", "GET"])
+@login_required
+def edit_discount(id):
+    discount = Discount.query.get(id)
+    cars = Car.query.filter_by(owner_id=current_user.id)
+    if request.method == "POST":
+        discount_name = request.form.get('discountName')
+        start_date_str = request.form.get('validFrom')
+        end_date_str = request.form.get('validTo')
+        discount_percentage = request.form.get('discountPercentage')
+
+        date_format = "%Y-%m-%d"
+        valid_from = datetime.strptime(start_date_str, date_format)
+        valid_to = datetime.strptime(end_date_str, date_format)
+
+        discount.discount_name = discount_name
+        discount.valid_from = valid_from
+        discount.to = valid_to
+        discount.discount_percentage = discount_percentage
+
+        for car in cars:
+            selected_car = f'{car.id}' in request.form
+            if selected_car:
+                if discount in car.discounts:
+                    car.discounts.remove(discount)
+                car.discounts.append(discount)
+
+        db.session.commit()
+        return redirect(url_for("discounts"))
+
+    return render_template("edit_discount.html", cars=cars, discount=discount)
+
+
+@app.route("/discounts/delete_discount/<int:id>")
+@login_required
+def delete_discount(id):
+    discount = Discount.query.get(id)
+    cars = Car.query.filter_by(owner_id=current_user.id)
+
+    for car in cars:
+        if discount in car.discounts:
+            car.discounts.remove(discount)
+
+    db.session.delete(discount)
+    db.session.commit()
+
+    return redirect(url_for("discounts"))
+
+
+@app.route("/discounts/edit_priserise/<int:id>", methods=["POST", "GET"])
+@login_required
+def edit_priserise(id):
+    discount = Discount.query.get(id)
+    cars = Car.query.filter_by(owner_id=current_user.id)
+    if request.method == "POST":
+        discount_name = request.form.get('discountName')
+        start_date_str = request.form.get('validFrom')
+        end_date_str = request.form.get('validTo')
+        discount_percentage = request.form.get('discountPercentage')
+
+        date_format = "%Y-%m-%d"
+        valid_from = datetime.strptime(start_date_str, date_format)
+        valid_to = datetime.strptime(end_date_str, date_format)
+
+        discount.discount_name = discount_name
+        discount.valid_from = valid_from
+        discount.to = valid_to
+        discount.discount_percentage = discount_percentage
+
+        for car in cars:
+            selected_car = f'{car.id}' in request.form
+            if selected_car:
+                if discount in car.discounts:
+                    car.discounts.remove(discount)
+                car.discounts.append(discount)
+        db.session.commit()
+        return redirect(url_for("discounts"))
+
+    return render_template("edit_pricerise.html", cars=cars, discount=discount)
+
+
+@app.route("/discounts/delete_priserise/<int:id>")
+@login_required
+def delete_priserise(id):
+    discount = Discount.query.get(id)
+    cars = Car.query.filter_by(owner_id=current_user.id)
+
+    for car in cars:
+        if discount in car.discounts:
+            car.discounts.remove(discount)
+
+    db.session.delete(discount)
+    db.session.commit()
+
+    return redirect(url_for("discounts"))
+
+
+# {
+#   "start_date": "2024-02-01",
+#   "end_date": "2024-02-10",
+#   "pick_up": "Zestafoni",
+#   "min_price": 1,
+#   "max_price": 50,
+#   "body_type": "sedan",
+#   "fuels": ["hybrid"],
+#   "drives": ["rearWheel"],
+#   "transmission": "automatic"
+# }
+@app.route("/filter/cars")
+def api_filter_cars():
+    data = request.get_json()
+
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    pick_up = data.get('pick_up')
+    min_price = data.get('min_price')
+    max_price = data.get('max_price')
+    body_types = data.get('body_types')
+    fuels = data.get('fuels')
+    drives = data.get('drives')
+    transmission = data.get('transmission')
+
+    # Filter Cars
+    cars = filter_date_range(start_date, end_date)
+    cars = filter_working_days(cars)
+    cars = filter_public_holiday(cars)
+    cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
+    cars = filter_by_delivery(cars, pick_up)
+    cars = filter_by_specs(cars, body_types, fuels, drives, transmission)
+
+    cars_json = generate_car_json(cars, price_and_id)
+
+    return jsonify({"cars": cars_json})
+
+
+def filter_date_range(start_date, end_date):
+    orders = Order.query
     orders = orders.filter(
         or_(
             (Order.rent_date >= start_date) & (Order.rent_date <= end_date),
@@ -591,121 +878,143 @@ def filtered_rent_cars(orders, start_date, end_date, min_price, max_price):
             (Order.rent_date <= start_date) & (Order.unrent_date >= end_date)
         )
     ).all()
-
     cars = Car.query.filter(not_(Car.id.in_([order.car_id for order in orders])))
-    cars = cars.filter(and_(Car.rent_price <= max_price, Car.rent_price >= min_price))
-
-    types = [request.form.get(f"{car_types[i][0]}") for i in range(len(car_types)) if
-             request.form.get(f"{car_types[i][0]}") is not None]
-    if types:
-        cars = cars.filter(Car.car_type.in_(types))
-
-    gear_boxes = [request.form.get(f"{gear_box_types[i][0]}") for i in range(len(gear_box_types)) if
-                  request.form.get(f"{gear_box_types[i][0]}") is not None]
-    if gear_boxes:
-        cars = cars.filter(Car.gear_box.in_(gear_boxes))
-
-    cars = cars.filter(Car.for_rent == "public")
-    cars = cars.all()
-
     return cars
 
 
-@app.route("/api/rent/cars")
-def api_rent_cars():
-    cars = Car.query.filter_by(for_rent='public')
-    return jsonify({"cars": generate_car_json(cars)})
+def filter_working_days(cars):
+    today_date = datetime.now()
+    day_of_week = today_date.strftime('%A').lower()
+
+    filtered_cars = []
+    for car in cars:
+        user = User.query.get(car.owner_id)
+        working_days = json.loads(user.working_days)
+        if working_days.get(day_of_week, False):
+            filtered_cars.append(car)
+
+    return filtered_cars
 
 
-@app.route("/api/rent/cars/<int:id>")
-def api_owner_rent_cars(id):
-    cars = Car.query.filter_by(owner_id=id)
-    return jsonify({"cars": generate_car_json(cars)})
+def filter_public_holiday(cars):
+    today_date = datetime.now()
+    holiday = today_date.strftime('%Y-%m-%d')
+
+    filtered_cars = []
+    for car in cars:
+        user = User.query.get(car.owner_id)
+        public_holidays = json.loads(user.public_holidays)
+        for holiday_data in public_holidays:
+            if holiday_data.get("date") != holiday:
+                filtered_cars.append(car)
+                break
+
+    return filtered_cars
 
 
-@app.route("/api/rent/flats")
-def api_rent_flats():
-    flats = Flat.query.all()
-    flat_info = []
-    for flat in flats:
-        owner = str(flat.flat_owner)
-        flat_type = str(flat.flat_type)
-        region = str(flat.region)
-        flat_json = {
-            "id": flat.id,
-            "name": flat.name,
-            "images": json.loads(flat.images),
-            "location": flat.location,
-            "region": region,
-            "overview": flat.overview,
-            "day_price": flat.day_price,
-            "map": flat.map,
-            "flat_type": flat_type,
-            "owner": owner
+def filter_by_price(cars, start_date_str, end_date_str, min_price, max_price):
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+
+    current_date = datetime.now()
+    days_difference = (end_date - start_date).days
+
+    filtered_cars = []
+    price_and_id = []
+    for car in cars:
+        seasons = Season.query.filter_by(season_owner_id=car.owner_id)
+        tariffs = Tariff.query.filter_by(tariff_owner_id=car.owner_id)
+
+        car_price = None
+        season_id = None
+        tariff_id = None
+
+        for season in seasons:
+            if season.start_date <= current_date <= season.end_date:
+                season_id = season.id
+                for tariff in tariffs:
+                    if tariff.from_day <= days_difference <= tariff.to_day:
+                        tariff_id = tariff.id
+
+        for condition in json.loads(car.price_conditions):
+            if not tariff_id:
+                car_price = condition["price"]
+            else:
+                if condition["season_id"] == season_id and condition["tariff_id"] == tariff_id:
+                    car_price = condition["price"]
+                    break
+
+        real_price = car_price
+        if car.discounts and car_price is not None:
+            car_price = price_with_discount(car, car_price, current_date)
+
+        if car_price is not None and min_price <= car_price <= max_price:
+            price_and_id.append({"id": car.id, "price": real_price, "discounted": car_price})
+            filtered_cars.append(car)
+
+    return filtered_cars, price_and_id
+
+
+def price_with_discount(car, car_price, current_date):
+    current_date = current_date.date()
+    for discount in car.discounts:
+        if discount.valid_from <= current_date <= discount.to:
+            if discount.rise_or_disc:
+                car_price *= (1 + discount.discount_percentage / 100)
+            else:
+                car_price *= 1 - (discount.discount_percentage / 100)
+            break
+    return car_price
+
+
+def filter_by_delivery(cars, pick_up):
+    filtered_cars = []
+
+    for car in cars:
+        deliver = Delivery.query.filter_by(city=pick_up, delivery_owner_id=car.owner_id).first()
+        if deliver:
+            filtered_cars.append(car)
+
+    return filtered_cars
+
+
+def filter_by_specs(cars, body_types, fuels, drives, transmission):
+    filtered_cars = []
+    for car in cars:
+        if car.body_type in body_types:
+            engine = json.loads(car.engine)
+            chassis = json.loads(car.chassis)
+
+            if engine["fuel"] in fuels and chassis["drive"] in drives and chassis["transmission"] == transmission:
+                filtered_cars.append(car)
+
+    return filtered_cars
+
+
+def generate_car_json(cars, price_and_id):
+    cars_json = []
+    for car in cars:
+        price = None
+        discounted = None
+        for pid in price_and_id:
+            if pid["id"] == car.id:
+                price = pid["price"]
+                discounted = pid["discounted"]
+        car_json = {
+            "id": car.id,
+            "brand": car.brand,
+            "model": car.model,
+            "body_color": car.body_color,
+            "license_plate": car.license_plate,
+            "year_of_manufacture": car.year_of_manufacture,
+            "engine": json.loads(car.engine),
+            "chassis": json.loads(car.chassis),
+            "specs": json.loads(car.specs),
+            "insurance": json.loads(car.insurance),
+            "mileage_limit": json.loads(car.mileage_limit),
+            "price": price,
+            "discounted": discounted,
+            "music": json.loads(car.music),
         }
-        flat_info.append(flat_json)
-    return jsonify({"flats": flat_info})
-
-
-@app.route("/api/regions")
-def api_regions():
-    regions = Region.query.all()
-    region_info = []
-    for reg in regions:
-        region_json = {
-            "id": reg.id,
-            "name": reg.name,
-            "video": reg.video,
-            "article_one": reg.article_one,
-            "article_two": reg.article_two,
-            "article_three": reg.article_three,
-            "images": json.loads(reg.images)
-        }
-        region_info.append(region_json)
-    return jsonify({"regions": region_info})
-
-
-@app.route("/api/blogs")
-def api_blogs():
-    blogs = Location.query.all()
-    blog_info = []
-    for blog in blogs:
-        blog_json = {
-            "id": blog.id,
-            "name": blog.name,
-            "overview": blog.overview,
-            "place_type": blog.place_type,
-            "map": blog.map,
-            "region": blog.region,
-            "images": json.loads(blog.images)
-        }
-        blog_info.append(blog_json)
-    return jsonify({"blogs": blog_info})
-
-
-@app.route("/api/orders/car")
-def api_orders_car():
-    car_orders = Order.query.all()
-    orders_info = []
-    for ord in car_orders:
-        car = str(ord.car_name)
-        host = str(ord.host)
-        order_json = {
-            "id": ord.id,
-            "car": car,
-            "rent_date": ord.rent_date,
-            "unrent_date": ord.unrent_date,
-            "pickup": ord.pickup_city,
-            "dropoff": ord.drop_city,
-            "rent_price": ord.total_price,
-            "host": host,
-            "c_name": ord.customer_name,
-            "c_email": ord.customer_email,
-            "c_phone": ord.customer_phone,
-            "c_phone_op": ord.customer_phone_op,
-            "c_birthdate": ord.customer_birthdate,
-            "c_app": ord.customer_app,
-            "real_order": ord.order_owner,
-        }
-        orders_info.append(order_json)
-    return jsonify({"orders": orders_info})
+        cars_json.append(car_json)
+    return cars_json

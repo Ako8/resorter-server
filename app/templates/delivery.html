@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Delivery</title>
+</head>
+<body>
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    h2 {
+        color: #333333;
+    }
+</style>
+<div class="container mt-5 p-4">
+    <form  method="post">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">City</th>
+                <th scope="col">Price</th>
+                <th scope="col">Free from</th>
+                <th scope="col">Delivery time</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for delivery in deliverys %}
+            <tr>
+                <td>{{ delivery.city }} <a href="{{ url_for('delete_delivery', id=delivery.id) }}">Remove</a></td>
+                <td><input type="number" value="{{ delivery.price }}" name="price_{{ loop.index }}" id="price_{{ loop.index }}" class="form-control" style="width: 100px"></td>
+                <td><input type="number" value="{{ delivery.free_from }}" name="free_from_{{ loop.index }}" id="free_from_{{ loop.index }}" class="form-control" style="width: 100px"></td>
+                <td style="display: flex; flex-wrap: wrap; gap: 1rem">
+                    <div>
+                        <select name="hour_{{ loop.index }}" class="form-select" id="hours" style="width: 70px">
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select name="minute_{{ loop.index }}" class="form-select" id="minutes" style="width: 70px">
+                            <option value="0">00</option>
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="45">45</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+    <form id="cityForm" class="mt-4" method="post" action="{{ url_for('add_delivery') }}">
+        <div class="form-group">
+            <label for="citySelect">Choose City:</label>
+            <select class="form-control" id="citySelect" style="width: 200px" name="city">
+                <option value="Batumi">Batumi</option>
+                <option value="Borjomi">Borjomi</option>
+                <option value="Gudauri">Gudauri</option>
+                <option value="Kobuleti">Kobuleti</option>
+                <option value="Kutaisi">Kutaisi</option>
+                <option value="Mtskheta">Mtskheta</option>
+                <option value="Poti">Poti</option>
+                <option value="Senaki">Senaki</option>
+                <option value="Stepantsminda">Stepantsminda</option>
+                <option value="Sukhum">Sukhum</option>
+                <option value="Tbilisi">Tbilisi</option>
+                <option value="Telavi">Telavi</option>
+                <option value="Zestafoni">Zestafoni</option>
+                <option value="Zugdidi">Zugdidi</option>
+            </select>
+        </div>
+        <button type="submit" class="mt-2 btn btn-primary">Add</button>
+    </form>
+
+</div>
+</body>
+{% endblock %}
+</html>

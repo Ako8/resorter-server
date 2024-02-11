@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha2/css/bootstrap.min.css"
+          integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8sh+WyQ8f5e6d7IqWjwlEjFg8ezydBCsArWXa1" crossorigin="anonymous">
+    <title>Profile Form</title>
+</head>
+<body>
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    h2 {
+        color: #333333;
+    }
+</style>
+<div class="container mt-5 p-4">
+    <h2>Profile Section</h2>
+    <form method="post" action="{{ url_for('settings') }}" class="mb-4">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+            <!-- Profile Section -->
+            <div class="mb-3">
+                <label for="companyName" class="form-label">Name of Company</label>
+                <input value="{{ user.company_name }}" type="text" class="form-control" id="companyName"
+                       name="companyName">
+            </div>
+
+            <div class="mb-3">
+                <label for="language" class="form-label">Language</label>
+                <select class="form-select" id="language" name="language">
+                    <option value="georgia" selected>Georgia</option>
+                    <option value="english">English</option>
+                    <option value="russian">Russian</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="legalName" class="form-label">Legal Name of Business</label>
+                <input type="text" value="{{ user.business_name }}" class="form-control" id="legalName"
+                       name="legalName">
+            </div>
+
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="tel" value="{{ user.phone }}" class="form-control" id="phone" name="phone">
+            </div>
+
+            <div class="mb-3">
+                <label for="secondPhone" class="form-label">Second Phone</label>
+                <input type="tel" value="{{ user.second_phone }}" class="form-control" id="secondPhone"
+                       name="secondPhone">
+            </div>
+
+            <div class="mb-3">
+                <label for="country" class="form-label">Country</label>
+                <input type="text" value="{{ user.country }}" class="form-control" id="country" name="country">
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" value="{{ user.email }}" class="form-control" id="email" name="email">
+            </div>
+        </div>
+
+        <!-- Working Days Section -->
+        <h2>Working Days Section</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem" class="mb-3">
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="monday" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="monday" {% if working_days.monday %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="monday">
+                    Monday
+                </label>
+            </div>
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="tuesday" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="tuesday" {% if working_days.tuesday %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="tuesday">
+                    Tuesday
+                </label>
+            </div>
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="wednesday" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="wednesday" {% if working_days.wednesday %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="wednesday">
+                    Wednesday
+                </label>
+            </div>
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="thursday" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="thursday" {% if working_days.thursday %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="thursday">
+                    Thursday
+                </label>
+            </div>
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="friday" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="friday" {% if working_days.friday %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="friday">
+                    Friday
+                </label>
+            </div>
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="saturday" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="saturday" {% if working_days.saturday %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="saturday">
+                    Saturday
+                </label>
+            </div>
+
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="sunday" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="sunday" {% if working_days.sunday %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="sunday">
+                    Sunday
+                </label>
+            </div>
+        </div>
+
+        <!-- Payment for Rent Section -->
+        <h2>Payment for Rent Section</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem" class="mb-3">
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="cash" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="cash" {% if payment_methods.cash %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="cash">
+                    Cash
+                </label>
+            </div>
+
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="visa" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="visa" {% if payment_methods.visa %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="visa">
+                    Visa
+                </label>
+            </div>
+
+            <div class="form-check shadow-lg border border-secondary rounded" style="padding:10px 10px 10px 30px ">
+                <input name="masterCard" class="form-check-input" style="padding:10px 10px 10px 10px ; border: solid"
+                       type="checkbox"
+                       id="masterCard" {% if payment_methods.masterCard %}checked{% endif %}>
+                <label class="form-check-label" style="margin-left: 10px" for="masterCard">
+                    Master Card
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+
+    </form>
+
+
+    <!-- Public Holidays Section -->
+    <h2>Public Holidays Section</h2>
+    <form method="post" action="{{ url_for('add_public_day') }}">
+        <div class="input-group mb-3">
+            <input type="text" name="name" class="form-control" placeholder="Name">
+            <input type="date" name="date" class="form-control" placeholder="Days ..to">
+            <button class="btn btn-outline-secondary" type="submit">Add</button>
+        </div>
+    </form>
+    <table class="table table-striped">
+        <thead>
+        <tr class="border">
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Date</th>
+            <th scope="col">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for day in public_days %}
+        <tr class="border">
+            <th scope="row">{{ loop.index }}</th>
+            <td>{{ day.name }}</td>
+            <td>{{ day.date }}</td>
+            <td><a href="{{ url_for('delete_public_day', date=day.date ) }}">Delete</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="post" action="{{ url_for('add_tariff') }}">
+        <!-- Tariffs Section -->
+        <h2>Tariffs Section</h2>
+        <div class="input-group mb-3">
+            <input type="number" name="start_day" class="form-control" placeholder="Days ..to">
+            <input type="number" name="end_day" class="form-control" placeholder="to.. Days">
+            <button class="btn btn-outline-secondary" type="submit">Add tariff</button>
+        </div>
+    </form>
+    <table class="table table-striped">
+        <thead>
+        <tr class="border">
+            <th scope="col">ID</th>
+            <th scope="col">From</th>
+            <th scope="col">To</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for tariff in tariffs %}
+        <tr class="border">
+            <th scope="row">{{ tariff.id }}</th>
+            <td>{{ tariff.from_day }}</td>
+            <td>{{ tariff.to_day }}</td>
+            <td><a href="{{ url_for('delete_tarrif', id=tariff.id ) }}">Delete</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="post" action="{{ url_for('add_season') }}">
+        <!-- Seasonal Prices Section -->
+        <h2>Seasonal Prices Section</h2>
+        <div class="input-group mb-3">
+            <input type="date" name="start_date" class="form-control" placeholder="Days From..">
+            <input type="date" name="end_date" class="form-control" placeholder="..To Days">
+            <button class="btn btn-outline-secondary" type="submit">Add season</button>
+        </div>
+    </form>
+    <table class="table table-striped">
+        <thead>
+        <tr class="border">
+            <th scope="col">#</th>
+            <th scope="col">From</th>
+            <th scope="col">To</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for season in seasons %}
+        <tr class="border">
+            <th scope="row">Season {{ loop.index }}</th>
+            <td>{{ season.start_date.strftime('%d %B') }}</td>
+            <td>{{ season.end_date.strftime('%d %B') }}</td>
+            <td><a href="{{ url_for('delete_season', id=season.id ) }}">Delete</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.10.2/umd/popper.min.js"
+        integrity="sha384-12/13TwmM6ogIgjm3lZqOuNRjzuxRSMBIJDjtAe+4l5W1ByvWmRcFYWRSUzNSFA3Z"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha2/js/bootstrap.min.js"
+        integrity="sha384-zZ0cAt/BwOmGtZtXEAgYOu3flEX++ZXF1NfISn49dXWEQa59vUdjGKmiDz3+L2jl"
+        crossorigin="anonymous"></script>
+</body>
+{% endblock %}
+</html>

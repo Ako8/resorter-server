@@ -6,7 +6,7 @@ from app.models import User
 
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username',
+    username = StringField('Company name',
                            validators=[DataRequired(), Length(min=2, max=20)])
     email = StringField('Email',
                         validators=[DataRequired(), Email()])
@@ -16,7 +16,7 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Sign Up')
 
     def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
+        user = User.query.filter_by(company_name=username.data).first()
         if user:
             raise ValidationError('That username is taken. Please choose a different one.')
 
