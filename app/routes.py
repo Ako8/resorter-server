@@ -37,7 +37,7 @@ def register():
             "sunday": True
         }
         user = User(company_name=form.username.data, email=form.email.data, password=hashed_password,
-                    working_days=working_days, payment_methods=[], public_holidays=[])
+                    working_days=json.dumps(working_days), payment_methods=[], public_holidays=[])
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You are now able to log in', 'success')
@@ -1241,3 +1241,40 @@ def api_settings(id):
         return jsonify({"PUT": "Update settings successfully"})
     elif request.method == "GET":
         return jsonify({"settings": generate_settings_json(user)})
+
+
+@app.route("/user/<int:id>", methods=["GET"])
+def user(id):
+    user = User.query.get(id)
+    user_json = {
+        "id": user.id,
+        "company_name": user.company_name,
+        "gmail": user.email,
+        "phone": user.phone
+    }
+
+    return jsonify({"user": user_json})
+
+
+@app.route("/add/user", methods=["POST"])
+def add_user():
+    if request.method == "POST":
+        data = request.get_json()
+        hashed_password = bcrypt.generate_password_hash(data.get("password")).decode('utf-8')
+        working_days = {
+            "monday": True,
+            "tuesday": True,
+            "wednesday": True,
+            "thursday": True,
+            "friday": True,
+            "saturday": True,
+            "sunday": True
+        }
+        user = User(company_name=data.get("company_name"), email=data.get("email"), password=hashed_password,
+                    working_days=json.dumps(working_days), payment_methods="[]", public_holidays="[]", phone=data.get("phone"))
+        db.session.add(user)
+        db.session.commit()
+
+    return jsonify({"user": "suc sex"})
+
+
