@@ -13,7 +13,7 @@ from app.models import User, Order, FlatOrder, Car, Tariff, Season, \
 
 
 @app.route("/")
-@app.route("/dashboard")
+@app.route("/api")
 @login_required
 def dashboard():
     car_orders = Order.query.filter_by(order_owner=True)
@@ -449,7 +449,6 @@ def edit_car(id):
         car.music = json.dumps(music)
         car.owner_id = current_user.id
 
-        db.session.add(car)
         db.session.commit()
 
     return render_template('test_edit_car.html', mileage_limit=json.loads(car.mileage_limit), car=car, tariffs=tariffs,
@@ -831,44 +830,6 @@ def delete_priserise(id):
     return redirect(url_for("discounts"))
 
 
-# {
-#   "start_date": "2024-02-01",
-#   "end_date": "2024-02-10",
-#   "pick_up": "Zestafoni",
-#   "min_price": 1,
-#   "max_price": 50,
-#   "body_type": "sedan",
-#   "fuels": ["hybrid"],
-#   "drives": ["rearWheel"],
-#   "transmission": "automatic"
-# }
-@app.route("/filter/cars")
-def api_filter_cars():
-    data = request.get_json()
-
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
-    pick_up = data.get('pick_up')
-    min_price = data.get('min_price')
-    max_price = data.get('max_price')
-    body_types = data.get('body_types')
-    fuels = data.get('fuels')
-    drives = data.get('drives')
-    transmission = data.get('transmission')
-
-    # Filter Cars
-    cars = filter_date_range(start_date, end_date)
-    cars = filter_working_days(cars)
-    cars = filter_public_holiday(cars)
-    cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
-    cars = filter_by_delivery(cars, pick_up)
-    cars = filter_by_specs(cars, body_types, fuels, drives, transmission)
-
-    cars_json = generate_car_json(cars, price_and_id)
-
-    return jsonify({"cars": cars_json})
-
-
 def filter_date_range(start_date, end_date):
     orders = Order.query
     orders = orders.filter(
@@ -978,14 +939,17 @@ def filter_by_delivery(cars, pick_up):
     return filtered_cars
 
 
-def filter_by_specs(cars, body_types, fuels, drives, transmission):
+def filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min, fuel_consumption_max,
+                    engine_type_min, engine_type_max):
     filtered_cars = []
     for car in cars:
-        if car.body_type in body_types:
+        if car.body_type in body_types and car.year_of_manufacture >= year:
             engine = json.loads(car.engine)
             chassis = json.loads(car.chassis)
 
-            if engine["fuel"] in fuels and chassis["drive"] in drives and chassis["transmission"] == transmission:
+            if (engine["fuel"] in fuels and chassis["drive"] in drives and chassis["transmission"] == transmission and
+                fuel_consumption_min <= engine["fuel_consumption"] <= fuel_consumption_max) and \
+                    engine_type_min <= engine["engine_type"] <= engine_type_max:
                 filtered_cars.append(car)
 
     return filtered_cars
@@ -1018,3 +982,262 @@ def generate_car_json(cars, price_and_id):
         }
         cars_json.append(car_json)
     return cars_json
+
+
+def generate_settings_json(user):
+    settings_json = {
+        "id": user.id,
+        "company_name": user.company_name,
+        "business_name": user.business_name,
+        "phone": user.phone,
+        "second_phone": user.second_phone,
+        "country": user.country,
+        "email": user.email,
+        "working_days": json.loads(user.working_days),
+        "payment_methods": json.loads(user.payment_methods),
+        "public_holidays": json.loads(user.public_holidays),
+    }
+    return settings_json
+
+
+def process_car_data(data, user_id, update_existing_car=None):
+    tariffs = Tariff.query.filter_by(tariff_owner_id=user_id)
+    seasons = Season.query.filter_by(season_owner_id=user_id)
+
+    # Main Section
+    brand = data.get('brand')
+    model = data.get('model')
+    license_plate = data.get('licensePlate')
+    year_of_manufacture = data.get('year')
+    body_color = data.get('bodyColor')
+    body_type = data.get('bodyType')
+
+    # Mileage Limit Section
+    mileage_limit = {
+        "unlimited": 'unlimited' in data,
+        "limit": data.get('limit'),
+        "overage_fee": data.get('overageFee')
+    }
+
+    # Music Section
+    music_features = ["radio", "aux", "bluetooth", "Audio-CD", "usb", "mp3"]
+    music = {feature: feature in data for feature in music_features}
+
+    # Insurance Section
+    insurance = {
+        "franchise": 'franchise' in data,
+        "franchise_amount": data.get('franchiseAmount'),
+        "deposit": 'deposit' in data,
+        "deposit_amount": data.get('depositAmount')
+    }
+
+    # Engine Section
+    engine = {
+        "engine_type": data.get('engineType'),
+        "horsepower": data.get('horsepower'),
+        "fuel": data.get('fuel'),
+        "tank_capacity": data.get('tankCapacity'),
+        "fuel_consumption": data.get('fuelConsumption')
+    }
+
+    # Chassis Section
+    chassis = {
+        "transmission": data.get('transmission'),
+        "drive": data.get('drive'),
+        "abs": 'abs' in data,
+        "ebd": 'ebd' in data,
+        "esp": 'esp' in data
+    }
+
+    # Other Section
+    specs = {key: data.get(key) for key in ['requiredLicense', 'seats', 'doors', 'airConditioning',
+                                            'interior', 'roof', 'poweredWindows', 'airbags', 'sideWheel',
+                                            'cruiseControl', 'rearViewCamera', 'parkingAssist']}
+
+    # Price Conditions Section
+    price_conditions = [{"season_id": season.id, "tariff_id": tariff.id,
+                         "price": int(data.get(f"{season.id}{tariff.id}", 0))} for season in seasons for tariff in
+                        tariffs] + [{"season_id": season.id, "tariff_id": None, "price": int(data.get("more", 0))}
+                                    for season in seasons]
+
+    if update_existing_car:
+        car = update_existing_car
+        car.brand = brand
+        car.model = model
+        car.license_plate = license_plate
+        car.year_of_manufacture = year_of_manufacture
+        car.body_color = body_color
+        car.body_type = body_type
+        car.price_conditions = json.dumps(price_conditions)
+        car.mileage_limit = json.dumps(mileage_limit)
+        car.insurance = json.dumps(insurance)
+        car.engine = json.dumps(engine)
+        car.chassis = json.dumps(chassis)
+        car.specs = json.dumps(specs)
+        car.music = json.dumps(music)
+        car.owner_id = update_existing_car.owner_id
+    else:
+        car = Car(
+            brand=brand,
+            model=model,
+            license_plate=license_plate,
+            year_of_manufacture=year_of_manufacture,
+            body_color=body_color,
+            body_type=body_type,
+            price_conditions=json.dumps(price_conditions),
+            mileage_limit=json.dumps(mileage_limit),
+            insurance=json.dumps(insurance),
+            engine=json.dumps(engine),
+            chassis=json.dumps(chassis),
+            specs=json.dumps(specs),
+            music=json.dumps(music),
+            owner_id=user_id
+        )
+
+    return car
+
+
+# ******************* APIS *************************
+
+@app.route("/filter/cars")
+def api_filter_cars():
+    data = request.get_json()
+
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    pick_up = data.get('pick_up')
+    min_price = data.get('min_price')
+    max_price = data.get('max_price')
+    body_types = data.get('body_types')
+    fuels = data.get('fuels')
+    drives = data.get('drives')
+    transmission = data.get('transmission')
+    fuel_consumption_min = data.get('fuel_consumption_min')
+    fuel_consumption_max = data.get('fuel_consumption_max')
+    engine_type_min = data.get('engine_type_min')
+    engine_type_max = data.get('engine_type_max')
+    year = data.get('year')
+
+    # Filter Cars
+    cars = filter_date_range(start_date, end_date)
+    cars = filter_working_days(cars)
+    cars = filter_public_holiday(cars)
+    cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
+    cars = filter_by_delivery(cars, pick_up)
+    cars = filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min,
+                           fuel_consumption_max, engine_type_min, engine_type_max)
+
+    cars_json = generate_car_json(cars, price_and_id)
+
+    return jsonify({"cars": cars_json})
+
+
+@app.route('/add/car/<int:id>', methods=['POST'])
+def api_add_car(id):
+    if request.method == 'POST':
+        data = request.get_json()
+
+        if user_id is None:
+            return jsonify({"error": "User not authenticated or User ID not provided"}), 401
+
+        car = process_car_data(data, id)
+
+        db.session.add(car)
+        db.session.commit()
+
+    return jsonify({"POST": "Car added successfully"})
+
+
+@app.route('/edit/car/<int:id>', methods=['PUT'])
+def api_edit_car(id):
+    if request.method == 'PUT':
+        data = request.get_json()
+        user_id = data.get("user_id")
+        car = Car.query.get(id)
+
+        if user_id is None:
+            return jsonify({"error": "User not authenticated or User ID not provided"}), 401
+
+        if car is None:
+            return jsonify({"error": "Car not found"}), 404
+
+        process_car_data(data, user_id, update_existing_car=car)
+
+        db.session.commit()
+
+    return jsonify({"PUT": "Edited successfully"})
+
+
+@app.route("/car/delete/<int:id>", methods=["DELETE"])
+def api_delete_car(id):
+    if request.method == "DELETE":
+        car = Car.query.get(id)
+        if car:
+            db.session.delete(car)
+            db.session.commit()
+            return jsonify({"message": "Car deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Car not found"}), 404
+    else:
+        return jsonify({"error": "Invalid request method"}), 405
+
+
+@app.route("/settings/<int:id>", methods=["PUT", "GET"])
+def api_settings(id):
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    if request.method == 'PUT':
+        data = request.get_json()
+
+        company_name = data.get('companyName')
+        legal_name = data.get('legalName')
+        phone = data.get('phone')
+        second_phone = data.get('secondPhone')
+        country = data.get('country')
+        email = data.get('email')
+
+        # Working Days Section
+        monday = 'monday' in data
+        tuesday = 'tuesday' in data
+        wednesday = 'wednesday' in data
+        thursday = 'thursday' in data
+        friday = 'friday' in data
+        saturday = 'saturday' in data
+        sunday = 'sunday' in data
+
+        working_days = {
+            "monday": monday,
+            "tuesday": tuesday,
+            "wednesday": wednesday,
+            "thursday": thursday,
+            "friday": friday,
+            "saturday": saturday,
+            "sunday": sunday
+        }
+
+        # Payment for Rent Section
+        cash = 'cash' in data
+        visa = 'visa' in data
+        master_card = 'masterCard' in data
+
+        payment_methods = {
+            "cash": cash,
+            "visa": visa,
+            "master_card": master_card
+        }
+
+        user.email = email
+        user.company_name = company_name
+        user.business_name = legal_name
+        user.phone = phone
+        user.second_phone = second_phone
+        user.country = country
+        user.payment_methods = json.dumps(payment_methods)
+        user.working_days = json.dumps(working_days)
+
+        db.session.commit()
+
+        return jsonify({"PUT": "Update settings successfully"})
+    elif request.method == "GET":
+        return jsonify({"settings": generate_settings_json(user)})

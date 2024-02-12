@@ -33,7 +33,7 @@
         <tr>
             <td>{{ car.id }}</td>
 
-            <td><img width="100" height="100" class="img-fluid d-block" style="max-height: 100%;" src="data:image/png;base64,{{ car.gallery.split('"')[3] }}" alt=""></td>
+            <td>{% if car.gallery %}<img width="100" height="100" class="img-fluid d-block" style="max-height: 100%;" src="data:image/png;base64,{{ car.gallery.split('"')[3] }}" alt="">{% endif %}</td>
             <td>{{ car.brand }} {{ car.model }}</td>
             <td>{{ car.owner }}</td>
             <td>{{ car.body_type }}</td>

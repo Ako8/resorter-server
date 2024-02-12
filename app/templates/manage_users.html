@@ -10,6 +10,7 @@
             <th>ID</th>
             <th>Username</th>
             <th>Email</th>
+            <th>Phone</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -17,8 +18,9 @@
         {% for user in users %}
         <tr>
             <td>{{user.id}}</td>
-            <td>{{user.username}}</td>
+            <td>{{user.company_name}}</td>
             <td>{{user.email}}</td>
+            <td>{{user.phone}}</td>
             <td>
                 <a href="{{ url_for('edit_user', id=user.id) }}" class="btn btn-primary btn-sm">Edit</a>
                 <button class="btn btn-danger btn-sm"

@@ -16,6 +16,10 @@
         </div>
         <div class="sidebar-links d-flex flex-column justify-content-center">
             <div class="sidebar-link">
+                <a class="link" href="{{ url_for('dashboard') }}">API</a>
+                <div class="sidebar-border"></div>
+            </div>
+            <div class="sidebar-link">
                 <a class="link" href="{{ url_for('manage_cars') }}">Manage Cars</a>
                 <div class="sidebar-border"></div>
             </div>
@@ -29,6 +33,10 @@
             </div>
             <div class="sidebar-link">
                 <a class="link" href="{{ url_for('settings') }}">Settings</a>
+                <div class="sidebar-border"></div>
+            </div>
+            <div class="sidebar-link">
+                <a class="link" href="{{ url_for('manage_users') }}">Admins</a>
                 <div class="sidebar-border"></div>
             </div>
         </div>
