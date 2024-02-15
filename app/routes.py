@@ -948,8 +948,8 @@ def filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_co
             chassis = json.loads(car.chassis)
 
             if (engine["fuel"] in fuels and chassis["drive"] in drives and chassis["transmission"] == transmission and
-                fuel_consumption_min <= engine["fuel_consumption"] <= fuel_consumption_max) and \
-                    engine_type_min <= engine["engine_type"] <= engine_type_max:
+                fuel_consumption_min <= int(engine["fuel_consumption"]) <= fuel_consumption_max) and \
+                    engine_type_min <= float(engine["engine_type"]) <= engine_type_max:
                 filtered_cars.append(car)
 
     return filtered_cars
@@ -978,7 +978,7 @@ def generate_car_json(cars, price_and_id):
             "mileage_limit": json.loads(car.mileage_limit),
             "price": price,
             "discounted": discounted,
-            "music": json.loads(car.music),
+            "music": json.loads(car.music) if car.music else None,
         }
         cars_json.append(car_json)
     return cars_json

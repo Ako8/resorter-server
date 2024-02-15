@@ -64,6 +64,8 @@
             <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse"
                  aria-labelledby="panelsStayOpen-collapseOne">
                 <div class="accordion-body">
+                    Send:
+                    <hr>
                     <code><pre>
 {
   "start_date": "2024-02-01",
@@ -80,6 +82,66 @@
   "fuel_consumption_max":80,
   "engine_type_min":0,
   "engine_type_max":20
+}
+                    </pre>
+                    </code>
+                    Get:
+                    <hr>
+                    <code><pre>
+{
+    "cars": [
+        {
+            "body_color": "white",
+            "brand": "Mersedes",
+            "chassis": {
+                "abs": true,
+                "drive": "front wheel",
+                "ebd": true,
+                "esp": true,
+                "transmission": "automatic"
+            },
+            "discounted": 50.0,
+            "engine": {
+                "engine_type": "1.2",
+                "fuel": "benzin",
+                "fuel_consumption": "11",
+                "horsepower": "60",
+                "tank_capacity": "40"
+            },
+            "id": 1,
+            "insurance": {
+                "deposit": true,
+                "deposit_amount": "200",
+                "franchise": false,
+                "franchise_amount": ""
+            },
+            "license_plate": "GA777HE",
+            "mileage_limit": {
+                "limit": "",
+                "overage_fee": "",
+                "unlimited": true
+            },
+            "model": "W204",
+            "music": null,
+            "price": 25,
+            "specs": {
+                "air_conditioning": "1Zone",
+                "airbags": "2",
+                "cruise_control": true,
+                "doors": "4",
+                "interior": "fabric",
+                "parking_assist": false,
+                "powered_windows": "2",
+                "rear_view_camera": true,
+                "required_license": "A",
+                "roof": "sunroof",
+                "seats": "2",
+                "side_wheel": "left"
+            },
+            "year_of_manufacture": 2013
+        }
+        ...
+    ]
 }
                     </pre>
                     </code>
