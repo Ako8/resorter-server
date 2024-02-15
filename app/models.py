@@ -232,3 +232,13 @@ class Activity(db.Model):
 
     def __repr__(self):
         return self.ip_add
+
+
+class Services(db.Model):
+    __tablename__ = "services"
+
+    id = db.Column(db.Integer, primary_key=True)
+    service_name = db.Column(db.String)
+    svg = db.Column(db.Text)
+    content = db.Column(db.Text)
+

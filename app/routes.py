@@ -9,7 +9,7 @@ from sqlalchemy import or_, not_
 from app import app, db, bcrypt
 from app.forms import RegistrationForm, LoginForm
 from app.models import User, Order, FlatOrder, Car, Tariff, Season, \
-    Delivery, Discount
+    Delivery, Discount, Services
 
 
 @app.route("/")
@@ -1338,5 +1338,21 @@ def filter_options():
         return jsonify(response)
     return jsonify({"Error": "not get request"})
 
+
+@app.route("/services", methods=["GET"])
+def services():
+    if request.method == "GET":
+        servs = Services.query.all()
+
+        servs_json = []
+        for serv in servs:
+            serv_json = {
+                "name": serv.service_name,
+                "content": serv.content,
+                "svg": serv.svg
+            }
+            servs_json.append(serv_json)
+
+        return jsonify({"services": servs_json})
 
 
