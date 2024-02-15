@@ -1271,10 +1271,72 @@ def add_user():
             "sunday": True
         }
         user = User(company_name=data.get("company_name"), email=data.get("email"), password=hashed_password,
-                    working_days=json.dumps(working_days), payment_methods="[]", public_holidays="[]", phone=data.get("phone"))
+                    working_days=json.dumps(working_days), payment_methods="[]", public_holidays="[]",
+                    phone=data.get("phone"))
         db.session.add(user)
         db.session.commit()
 
     return jsonify({"user": "suc sex"})
+
+
+@app.route("/filter/options", methods=["GET"])
+def filter_options():
+    if request.method == "GET":
+        pickups_json = [
+            {"option": "Tbilisi", "value": "Tbilisi"},
+            {"option": "Kutaisi", "value": "Kutaisi"},
+            {"option": "Borjomi", "value": "Borjomi"},
+            {"option": "Batumi", "value": "Batumi"},
+            {"option": "Gudauri", "value": "Gudauri"},
+            {"option": "Kobuleti", "value": "Kobuleti"},
+            {"option": "Mtskheta", "value": "Mtskheta"},
+            {"option": "Poti", "value": "Poti"},
+            {"option": "Senaki", "value": "Senaki"},
+            {"option": "Stepantsminda", "value": "Stepantsminda"},
+            {"option": "Telavi", "value": "Telavi"},
+            {"option": "Zestafoni", "value": "Zestafoni"},
+            {"option": "Zugdidi", "value": "Zugdidi"},
+            {"option": "Sukhum", "value": "Sukhum"},
+        ]
+
+        transmission_json = [
+            {"option": "Any", "value": "any"},
+            {"option": "Manual", "value": "Manual"},
+            {"option": "Automatic", "value": "Automatic"},
+        ]
+
+        engine_json = [
+            {"option": "Benzin", "value": "Benzin"},
+            {"option": "Dizel", "value": "Dizel"},
+            {"option": "Hybrid", "value": "Hybrid"},
+            {"option": "Turbo Dizel", "value": "Turbo Dizel"},
+            {"option": "Gaz", "value": "Gaz"},
+            {"option": "Electricity", "value": "Electricity"},
+        ]
+
+        drive_json = [
+            {"option": "Front wheel", "value": "Front wheel"},
+            {"option": "Rear wheel", "value": "Rear wheel"},
+            {"option": "4 wheel", "value": "4 wheel"},
+        ]
+
+        extra_options_json = [
+            {"option": "Free cancelation", "value": "Free cancelation"},
+            {"option": "Accepts credit cards", "value": "Accepts credit cards"},
+            {"option": "Unlimited mileage", "value": "Unlimited mileage"},
+            {"option": "Payment in cash", "value": "Payment in cash"},
+        ]
+
+        response = {
+            "pickups": pickups_json,
+            "gearbox": transmission_json,
+            "engine": engine_json,
+            "drive": drive_json,
+            "extra_options": extra_options_json
+        }
+
+        return jsonify(response)
+    return jsonify({"Error": "not get request"})
+
 
 
