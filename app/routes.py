@@ -9,7 +9,7 @@ from sqlalchemy import or_, not_
 from app import app, db, bcrypt
 from app.forms import RegistrationForm, LoginForm
 from app.models import User, Order, FlatOrder, Car, Tariff, Season, \
-    Delivery, Discount, Services
+    Delivery, Discount, Services, Region
 
 
 @app.route("/")
@@ -1356,3 +1356,17 @@ def services():
         return jsonify({"services": servs_json})
 
 
+@app.route("/regions/slider", methods=["GET"])
+def regions_slider():
+    if request.method == "GET":
+        regions = Region.query.all()
+        regs_json = []
+        for region in regions:
+            reg_json = {
+                "name": region.name,
+                "image": region.images,
+                "desc": region.article_one
+            }
+            regs_json.append(reg_json)
+
+        return jsonify({"regions": regs_json})
