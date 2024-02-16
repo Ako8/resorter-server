@@ -1370,3 +1370,25 @@ def regions_slider():
             regs_json.append(reg_json)
 
         return jsonify({"regions": regs_json})
+
+
+@app.route("/forms/car", methods=["GET"])
+def forms_car():
+    select_fields = {
+        "bodyColor": ["White", "Black", "Gray", "Red", "Blue", "Green", "Yellow", "Brown", "Beige", "Orange", "Silver",
+                      "Sky Blue", "Purple"],
+        "bodyType": ["Sedan", "Hatchback", "Wagon", "Minivan", "Minibus", "Crossover", "Pickup", "Cabriolet", "Scooter",
+                     "Motorcycle", "ATV", "Buggy", "Coupe"],
+        "requiredLicense": ["A", "A1", "ABM", "B", "B1", "BE", "M"],
+        "doors": ["2", "4"],
+        "airConditioning": ["1 Zone Climate Control", "2 Zone Climate Control", "4 Zone Climate Control"],
+        "interior": ["Fabric", "Leather", "Sport", "Sport Leather"],
+        "roof": ["Standard", "Sunroof", "Rigid Foldable Automatic", "Soft Foldable Manual", "Soft Foldable Automatic"],
+        "poweredWindows": ["None", "2", "4"],
+        "sideWheel": ["Left", "Right"],
+        "transmission": ["Manual", "Automatic", "Manual + Automatic"],
+        "drive": ["Front Wheel", "Rear Wheel", "4 Wheel"],
+        "airbags": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    }
+
+    return jsonify(select_fields)
