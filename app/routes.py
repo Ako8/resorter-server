@@ -1138,18 +1138,18 @@ def api_filter_cars():
         transmission = request.args.get('transmission')
         fuel_consumption_min = int(request.args.get('fuel_consumption_min'))
         fuel_consumption_max = int(request.args.get('fuel_consumption_max'))
-        engine_type_min = int(request.args.get('engine_type_min'))
-        engine_type_max = int(request.args.get('engine_type_max'))
+        engine_type_min = request.args.get('engine_type_min')
+        engine_type_max = request.args.get('engine_type_max')
         year = int(request.args.get('year'))
 
         # Filter Cars
         cars = filter_date_range(start_date, end_date)
-        cars = filter_working_days(cars)
-        cars = filter_public_holiday(cars)
+        # cars = filter_working_days(cars)
+        # cars = filter_public_holiday(cars)
         cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
-        cars = filter_by_delivery(cars, pick_up)
-        cars = filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min,
-                               fuel_consumption_max, engine_type_min, engine_type_max)
+        # cars = filter_by_delivery(cars, pick_up)
+        # cars = filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min,
+        #                        fuel_consumption_max, engine_type_min, engine_type_max)
 
         cars_json = generate_car_json(cars, price_and_id)
         return jsonify({"cars": cars_json})
