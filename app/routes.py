@@ -1124,26 +1124,11 @@ def get_price_conditions(id):
 
 # ******************* APIS *************************
 
-@app.route("/filter/cars", methods=["GET"])
+@app.route("/filter/cars", methods=["POST"])
 def api_filter_cars():
-    if request.method == "GET":
-        data = {
-            "start_date": "2024-02-01",
-            "end_date": "2024-02-10",
-            "pick_up": "Zestafoni",
-            "min_price": 1,
-            "max_price": 200,
-            "body_types": ["sedan", "cabriolet"],
-            "fuels": ["benzin", "hybrid"],
-            "drives": ["front wheel", "rear wheel"],
-            "transmission": "automatic",
-            "year": 2000,
-            "fuel_consumption_min": 0,
-            "fuel_consumption_max": 80,
-            "engine_type_min": 0,
-            "engine_type_max": 20
-        }
-
+    if request.method == "POST":
+        data = request.get_json()
+        print(data)
         start_date = data.get('start_date')
         end_date = data.get('end_date')
         pick_up = data.get('pick_up')
@@ -1169,10 +1154,11 @@ def api_filter_cars():
                                fuel_consumption_max, engine_type_min, engine_type_max)
 
         cars_json = generate_car_json(cars, price_and_id)
+        return jsonify({"cars": cars_json})
     else:
         return jsonify({"Error": "ar ari kai ambavi"})
 
-    return jsonify({"cars": cars_json})
+
 
 
 @app.route('/add/car/<int:id>', methods=['POST', "GET"])
