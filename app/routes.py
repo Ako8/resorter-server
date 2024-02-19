@@ -1124,25 +1124,23 @@ def get_price_conditions(id):
 
 # ******************* APIS *************************
 
-@app.route("/filter/cars", methods=["POST"])
+@app.route("/filter/cars", methods=["GET"])
 def api_filter_cars():
-    if request.method == "POST":
-        data = request.get_json()
-        print(data)
-        start_date = data.get('start_date')
-        end_date = data.get('end_date')
-        pick_up = data.get('pick_up')
-        min_price = data.get('min_price')
-        max_price = data.get('max_price')
-        body_types = data.get('body_types')
-        fuels = data.get('fuels')
-        drives = data.get('drives')
-        transmission = data.get('transmission')
-        fuel_consumption_min = data.get('fuel_consumption_min')
-        fuel_consumption_max = data.get('fuel_consumption_max')
-        engine_type_min = data.get('engine_type_min')
-        engine_type_max = data.get('engine_type_max')
-        year = data.get('year')
+    if request.method == "GET":
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        pick_up = request.args.get('pick_up')
+        min_price = request.args.get('min_price')
+        max_price = request.args.get('max_price')
+        body_types = request.args.getlist('body_types')
+        fuels = request.args.getlist('fuels')
+        drives = request.args.getlist('drives')
+        transmission = request.args.get('transmission')
+        fuel_consumption_min = request.args.get('fuel_consumption_min')
+        fuel_consumption_max = request.args.get('fuel_consumption_max')
+        engine_type_min = request.args.get('engine_type_min')
+        engine_type_max = request.args.get('engine_type_max')
+        year = request.args.get('year')
 
         # Filter Cars
         cars = filter_date_range(start_date, end_date)
