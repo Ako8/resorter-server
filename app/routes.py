@@ -1097,63 +1097,94 @@ def process_car_data(data, user_id, update_existing_car=None):
     return car
 
 
+def get_price_conditions(id):
+    seasons = Season.query.filter_by(season_owner_id=id)
+    tariffs = Tariff.query.filter_by(tariff_owner_id=id)
+
+    seasons_json = []
+    for season in seasons:
+        season_json = {
+            "id": season.id,
+            "start_date": season.start_date,
+            "end_date": season.end_date,
+        }
+        seasons_json.append(season_json)
+
+    tariffs_json = []
+    for tariff in tariffs:
+        tariff_json = {
+            "id": tariff.id,
+            "from_day": tariff.from_day,
+            "to": tariff.to_day
+        }
+        tariffs_json.append(tariff_json)
+
+    return seasons_json, tariffs_json
+
+
 # ******************* APIS *************************
 
-@app.route("/filter/cars")
+@app.route("/filter/cars", methods=["GET"])
 def api_filter_cars():
-    data = request.get_json()
+    if request.method == "GET":
+        data = request.get_json()
 
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
-    pick_up = data.get('pick_up')
-    min_price = data.get('min_price')
-    max_price = data.get('max_price')
-    body_types = data.get('body_types')
-    fuels = data.get('fuels')
-    drives = data.get('drives')
-    transmission = data.get('transmission')
-    fuel_consumption_min = data.get('fuel_consumption_min')
-    fuel_consumption_max = data.get('fuel_consumption_max')
-    engine_type_min = data.get('engine_type_min')
-    engine_type_max = data.get('engine_type_max')
-    year = data.get('year')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        pick_up = data.get('pick_up')
+        min_price = data.get('min_price')
+        max_price = data.get('max_price')
+        body_types = data.get('body_types')
+        fuels = data.get('fuels')
+        drives = data.get('drives')
+        transmission = data.get('transmission')
+        fuel_consumption_min = data.get('fuel_consumption_min')
+        fuel_consumption_max = data.get('fuel_consumption_max')
+        engine_type_min = data.get('engine_type_min')
+        engine_type_max = data.get('engine_type_max')
+        year = data.get('year')
 
-    # Filter Cars
-    cars = filter_date_range(start_date, end_date)
-    cars = filter_working_days(cars)
-    cars = filter_public_holiday(cars)
-    cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
-    cars = filter_by_delivery(cars, pick_up)
-    cars = filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min,
-                           fuel_consumption_max, engine_type_min, engine_type_max)
+        # Filter Cars
+        cars = filter_date_range(start_date, end_date)
+        cars = filter_working_days(cars)
+        cars = filter_public_holiday(cars)
+        cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
+        cars = filter_by_delivery(cars, pick_up)
+        cars = filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min,
+                               fuel_consumption_max, engine_type_min, engine_type_max)
 
-    cars_json = generate_car_json(cars, price_and_id)
+        cars_json = generate_car_json(cars, price_and_id)
+    else:
+        return jsonify({"Error": "ar ari kai ambavi"})
 
     return jsonify({"cars": cars_json})
 
 
-@app.route('/add/car/<int:id>', methods=['POST'])
+@app.route('/add/car/<int:id>', methods=['POST', "GET"])
 def api_add_car(id):
     if request.method == 'POST':
         data = request.get_json()
-
-        if user_id is None:
+        the_user = User.query.get(id)
+        if not the_user:
             return jsonify({"error": "User not authenticated or User ID not provided"}), 401
 
         car = process_car_data(data, id)
 
         db.session.add(car)
         db.session.commit()
+    if request.method == "GET":
+        seasons, tariffs = get_price_conditions(id)
+        return jsonify({"seasons": seasons, "tariffs": tariffs})
 
     return jsonify({"POST": "Car added successfully"})
 
 
 @app.route('/edit/car/<int:id>', methods=['PUT'])
 def api_edit_car(id):
+    car = Car.query.get(id)
     if request.method == 'PUT':
         data = request.get_json()
         user_id = data.get("user_id")
-        car = Car.query.get(id)
 
         if user_id is None:
             return jsonify({"error": "User not authenticated or User ID not provided"}), 401
@@ -1164,6 +1195,27 @@ def api_edit_car(id):
         process_car_data(data, user_id, update_existing_car=car)
 
         db.session.commit()
+
+    if request.method == "GET":
+        car_json = {
+            "id": car.id,
+            "brand": car.brand,
+            "model": car.model,
+            "license_plate": car.license_plate,
+            "year_of_manufacturer": car.year_of_manufacture,
+            "body_color": car.body_color,
+            "body_type": car.body_type,
+            "price_conditions": car.price_conditions,
+            "mileage_limit": car.mileage_limit,
+            "insurance": car.insurance,
+            "engine": car.engine,
+            "chassis": car.chassis,
+            "other": car.specs,
+            "music": car.music
+        }
+
+        seasons, tariffs = get_price_conditions(id)
+        return jsonify({"car": car_json, "seasons": seasons, "tariffs": tariffs})
 
     return jsonify({"PUT": "Edited successfully"})
 
