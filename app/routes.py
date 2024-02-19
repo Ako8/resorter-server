@@ -1127,7 +1127,22 @@ def get_price_conditions(id):
 @app.route("/filter/cars", methods=["GET"])
 def api_filter_cars():
     if request.method == "GET":
-        data = request.get_json()
+        data = {
+            "start_date": "2024-02-01",
+            "end_date": "2024-02-10",
+            "pick_up": "Zestafoni",
+            "min_price": 1,
+            "max_price": 200,
+            "body_types": ["sedan", "cabriolet"],
+            "fuels": ["benzin", "hybrid"],
+            "drives": ["front wheel", "rear wheel"],
+            "transmission": "automatic",
+            "year": 2000,
+            "fuel_consumption_min": 0,
+            "fuel_consumption_max": 80,
+            "engine_type_min": 0,
+            "engine_type_max": 20
+        }
 
         start_date = data.get('start_date')
         end_date = data.get('end_date')
