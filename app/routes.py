@@ -968,6 +968,8 @@ def generate_car_json(cars, price_and_id):
             if pid["id"] == car.id:
                 price = pid["price"]
                 discounted = pid["discounted"]
+
+        images = json.loads(car.gallery) if car.gallery else None
         car_json = {
             "id": car.id,
             "brand": car.brand,
@@ -983,6 +985,7 @@ def generate_car_json(cars, price_and_id):
             "price": price,
             "discounted": discounted,
             "music": json.loads(car.music) if car.music else None,
+            "image": images
         }
         cars_json.append(car_json)
     return cars_json
