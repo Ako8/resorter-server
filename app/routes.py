@@ -1,6 +1,6 @@
 import base64
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
@@ -874,46 +874,48 @@ def filter_public_holiday(cars):
 
 
 def filter_by_price(cars, start_date_str, end_date_str, min_price, max_price):
-    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    if start_date_str and end_date_str and min_price and max_price:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
 
-    current_date = datetime.now()
-    days_difference = (end_date - start_date).days
+        current_date = datetime.now()
+        days_difference = (end_date - start_date).days
 
-    filtered_cars = []
-    price_and_id = []
-    for car in cars:
-        seasons = Season.query.filter_by(season_owner_id=car.owner_id)
-        tariffs = Tariff.query.filter_by(tariff_owner_id=car.owner_id)
+        filtered_cars = []
+        price_and_id = []
+        for car in cars:
+            seasons = Season.query.filter_by(season_owner_id=car.owner_id)
+            tariffs = Tariff.query.filter_by(tariff_owner_id=car.owner_id)
 
-        car_price = None
-        season_id = None
-        tariff_id = None
+            car_price = None
+            season_id = None
+            tariff_id = None
 
-        for season in seasons:
-            if season.start_date <= current_date <= season.end_date:
-                season_id = season.id
-                for tariff in tariffs:
-                    if tariff.from_day <= days_difference <= tariff.to_day:
-                        tariff_id = tariff.id
+            for season in seasons:
+                if season.start_date <= current_date <= season.end_date:
+                    season_id = season.id
+                    for tariff in tariffs:
+                        if tariff.from_day <= days_difference <= tariff.to_day:
+                            tariff_id = tariff.id
 
-        for condition in json.loads(car.price_conditions):
-            if not tariff_id:
-                car_price = condition["price"]
-            else:
-                if condition["season_id"] == season_id and condition["tariff_id"] == tariff_id:
+            for condition in json.loads(car.price_conditions):
+                if not tariff_id:
                     car_price = condition["price"]
-                    break
+                else:
+                    if condition["season_id"] == season_id and condition["tariff_id"] == tariff_id:
+                        car_price = condition["price"]
+                        break
 
-        real_price = car_price
-        if car.discounts and car_price is not None:
-            car_price = price_with_discount(car, car_price, current_date)
+            real_price = car_price
+            if car.discounts and car_price is not None:
+                car_price = price_with_discount(car, car_price, current_date)
 
-        if car_price is not None and min_price <= car_price <= max_price:
-            price_and_id.append({"id": car.id, "price": real_price, "discounted": car_price})
-            filtered_cars.append(car)
-
-    return filtered_cars, price_and_id
+            if car_price is not None and int(min_price) <= car_price <= int(max_price):
+                price_and_id.append({"id": car.id, "price": real_price, "discounted": car_price})
+                filtered_cars.append(car)
+        return filtered_cars, price_and_id
+    else:
+        return cars
 
 
 def price_with_discount(car, car_price, current_date):
@@ -929,27 +931,29 @@ def price_with_discount(car, car_price, current_date):
 
 
 def filter_by_delivery(cars, pick_up):
-    filtered_cars = []
+    if pick_up:
+        filtered_cars = []
 
-    for car in cars:
-        deliver = Delivery.query.filter_by(city=pick_up, delivery_owner_id=car.owner_id).first()
-        if deliver:
-            filtered_cars.append(car)
-
-    return filtered_cars
+        for car in cars:
+            deliver = Delivery.query.filter_by(city=pick_up, delivery_owner_id=car.owner_id).first()
+            if deliver:
+                filtered_cars.append(car)
+        return filtered_cars
+    else:
+        return cars
 
 
 def filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min, fuel_consumption_max,
                     engine_type_min, engine_type_max):
     filtered_cars = []
     for car in cars:
-        if car.body_type in body_types and car.year_of_manufacture >= year:
+        if car.body_type in body_types and car.year_of_manufacture >= int(year):
             engine = json.loads(car.engine)
             chassis = json.loads(car.chassis)
 
-            if (engine["fuel"] in fuels and chassis["drive"] in drives and chassis["transmission"] == transmission and
-                fuel_consumption_min <= float(engine["fuel_consumption"]) <= fuel_consumption_max) and \
-                    engine_type_min <= float(engine["engine_type"]) <= engine_type_max:
+            if (engine["fuel"] in fuels and chassis["drive"] in drives and chassis["transmission"] in transmission and
+                float(fuel_consumption_min) <= float(engine["fuel_consumption"]) <= float(fuel_consumption_max)) and \
+                    float(engine_type_min) <= float(engine["engine_type"]) <= float(engine_type_max):
                 filtered_cars.append(car)
 
     return filtered_cars
@@ -1126,36 +1130,39 @@ def get_price_conditions(id):
 
 @app.route("/filter/cars", methods=["GET"])
 def api_filter_cars():
-    if request.method == "GET":
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        pick_up = request.args.get('pick_up')
-        min_price = int(request.args.get('min_price'))
-        max_price = int(request.args.get('max_price'))
-        body_types = request.args.getlist('body_types')
-        fuels = request.args.getlist('fuels')
-        drives = request.args.getlist('drives')
-        transmission = request.args.get('transmission')
-        fuel_consumption_min = float(request.args.get('fuel_consumption_min'))
-        fuel_consumption_max = float(request.args.get('fuel_consumption_max'))
-        engine_type_min = float(request.args.get('engine_type_min'))
-        engine_type_max = float(request.args.get('engine_type_max'))
-        year = int(request.args.get('year'))
+    today = datetime.now().date()
+    two_days_later = today + timedelta(days=2)
+    two_weeks_later = today + timedelta(days=16)
+    try:
+        if request.method == "GET":
+            start_date = request.args.get('start_date', default=f"{two_days_later}")
+            end_date = request.args.get('end_date', default=f"{two_weeks_later}")
+            pick_up = request.args.get('pick_up', default="Tbilisi")
+            min_price = request.args.get('min_price', default="0")
+            max_price = request.args.get('max_price', default="10000")
+            body_types = request.args.getlist('body_types') or ["Sedan", "Hatchback", "Wagon", "Minivan", "Minibus", "Crossover", "Pickup", "Cabriolet", "Scooter", "Motorcycle", "ATV", "Buggy", "Coupe"]
+            fuels = request.args.getlist('fuels') or ["Benzin", "Dizel", "Hybrid", "Turbo Dizel", "Gaz", "Electricity"]
+            drives = request.args.getlist('drives') or ["Front wheel", "Rear wheel", "4 wheel"]
+            transmission = request.args.getlist('transmission') or ["Manual", "Automatic"]
+            fuel_consumption_min = request.args.get('fuel_consumption_min', default="0")
+            fuel_consumption_max = request.args.get('fuel_consumption_max', default="20")
+            engine_type_min = request.args.get('engine_type_min', default="0")
+            engine_type_max = request.args.get('engine_type_max', default="80")
+            year = request.args.get('year', default="1999")
 
-        # Filter Cars
-        cars = filter_date_range(start_date, end_date)
-        cars = filter_working_days(cars)
-        cars = filter_public_holiday(cars)
-        cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
-        cars = filter_by_delivery(cars, pick_up)
-        cars = filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min,
-                               fuel_consumption_max, engine_type_min, engine_type_max)
+            # Filter Cars
+            cars = filter_date_range(start_date, end_date)
+            cars = filter_working_days(cars)
+            cars = filter_public_holiday(cars)
+            cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
+            cars = filter_by_delivery(cars, pick_up)
+            cars = filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min,
+                                   fuel_consumption_max, engine_type_min, engine_type_max)
 
-        cars_json = generate_car_json(cars, price_and_id)
-        return jsonify({"cars": cars_json})
-    else:
-        return jsonify({"Error": "ar ari kai ambavi"})
-
+            cars_json = generate_car_json(cars, price_and_id)
+            return jsonify({"cars": cars_json})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
@@ -1310,24 +1317,28 @@ def user(id):
 @app.route("/add/user", methods=["POST"])
 def add_user():
     if request.method == "POST":
-        data = request.get_json()
-        hashed_password = bcrypt.generate_password_hash(data.get("password")).decode('utf-8')
-        working_days = {
-            "monday": True,
-            "tuesday": True,
-            "wednesday": True,
-            "thursday": True,
-            "friday": True,
-            "saturday": True,
-            "sunday": True
-        }
-        user = User(company_name=data.get("company_name"), email=data.get("email"), password=hashed_password,
-                    working_days=json.dumps(working_days), payment_methods="[]", public_holidays="[]",
-                    phone=data.get("phone"))
-        db.session.add(user)
-        db.session.commit()
+        try:
+            data = request.get_json()
+            hashed_password = bcrypt.generate_password_hash(data.get("password")).decode('utf-8')
+            working_days = {
+                "monday": True,
+                "tuesday": True,
+                "wednesday": True,
+                "thursday": True,
+                "friday": True,
+                "saturday": True,
+                "sunday": True
+            }
+            user = User(company_name=data.get("company_name"), email=data.get("email"), password=hashed_password,
+                        working_days=json.dumps(working_days), payment_methods="[]", public_holidays="[]",
+                        phone=data.get("phone"))
+            db.session.add(user)
+            db.session.commit()
 
-    return jsonify({"user": "suc sex"})
+            return jsonify({"user": "success"})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
 
 
 @app.route("/filter/options", methods=["GET"])

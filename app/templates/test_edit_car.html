@@ -57,19 +57,19 @@
             <div class="mb-3">
                 <label for="bodyType" class="form-label">Body Type</label>
                 <select class="form-select" name="bodyType" id="bodyType" required>
-                    <option value="sedan" {% if car.body_type == 'sedan'%} selected {% endif %} >Sedan</option>
-                    <option value="hatchback" {% if car.body_type == 'hatchback'%} selected {% endif %}>Hatchback</option>
-                    <option value="wagon" {% if car.body_type == 'wagon'%} selected {% endif %}>Wagon</option>
-                    <option value="minivan" {% if car.body_type == 'minivan'%} selected {% endif %}>Minivan</option>
-                    <option value="minibus" {% if car.body_type == 'minibus'%} selected {% endif %}>Minibus</option>
-                    <option value="crossover" {% if car.body_type == 'crossover'%} selected {% endif %}>Crossover</option>
-                    <option value="pickup" {% if car.body_type == 'pickup'%} selected {% endif %}>Pickup</option>
-                    <option value="cabriolet" {% if car.body_type == 'cabriolet'%} selected {% endif %}>Cabriolet</option>
-                    <option value="scooter" {% if car.body_type == 'scooter'%} selected {% endif %}>Scooter</option>
-                    <option value="motorcycle" {% if car.body_type == 'motorcycle'%} selected {% endif %}>Motorcycle</option>
-                    <option value="atv" {% if car.body_type == 'atv'%} selected {% endif %}>ATV</option>
-                    <option value="buggy" {% if car.body_type == 'buggy'%} selected {% endif %}>Buggy</option>
-                    <option value="coupe" {% if car.body_type == 'coupe'%} selected {% endif %}>Coupe</option>
+                    <option value="Sedan" {% if car.body_type == 'sedan'%} selected {% endif %} >Sedan</option>
+                    <option value="Hatchback" {% if car.body_type == 'hatchback'%} selected {% endif %}>Hatchback</option>
+                    <option value="Wagon" {% if car.body_type == 'wagon'%} selected {% endif %}>Wagon</option>
+                    <option value="Minivan" {% if car.body_type == 'minivan'%} selected {% endif %}>Minivan</option>
+                    <option value="Minibus" {% if car.body_type == 'minibus'%} selected {% endif %}>Minibus</option>
+                    <option value="Crossover" {% if car.body_type == 'crossover'%} selected {% endif %}>Crossover</option>
+                    <option value="Pickup" {% if car.body_type == 'pickup'%} selected {% endif %}>Pickup</option>
+                    <option value="Cabriolet" {% if car.body_type == 'cabriolet'%} selected {% endif %}>Cabriolet</option>
+                    <option value="Scooter" {% if car.body_type == 'scooter'%} selected {% endif %}>Scooter</option>
+                    <option value="Motorcycle" {% if car.body_type == 'motorcycle'%} selected {% endif %}>Motorcycle</option>
+                    <option value="Atv" {% if car.body_type == 'atv'%} selected {% endif %}>ATV</option>
+                    <option value="Buggy" {% if car.body_type == 'buggy'%} selected {% endif %}>Buggy</option>
+                    <option value="Coupe" {% if car.body_type == 'coupe'%} selected {% endif %}>Coupe</option>
                 </select>
             </div>
         </div>
@@ -173,9 +173,9 @@
                     <div class="mb-3 col-md-6">
                         <label for="airConditioning" class="form-label">Air Conditioning</label>
                         <select class="form-select" name="airConditioning" id="airConditioning">
-                            <option selected value="1Zone">1 Zone Climate Control</option>
-                            <option value="2Zone">2 Zone Climate Control</option>
-                            <option value="4Zone">4 Zone Climate Control</option>
+                            <option selected value="1 Zone Climate Control">1 Zone Climate Control</option>
+                            <option value="2 Zone Climate Control">2 Zone Climate Control</option>
+                            <option value="4 Zone Climate Control">4 Zone Climate Control</option>
                         </select>
                     </div>
                     <div class="mb-3 col-md-6">
@@ -246,12 +246,12 @@
                     <div class="mb-3 col-md-6">
                         <label for="fuel" class="form-label">Fuel</label>
                         <select class="form-select" name="fuel" id="fuel">
-                            <option selected value="benzin">Benzin</option>
-                            <option value="dizel">Dizel</option>
-                            <option value="hybrid">Hybrid</option>
-                            <option value="turboDizel">Turbo Dizel</option>
-                            <option value="gaz">Gaz</option>
-                            <option value="electricity">Electricity</option>
+                            <option selected value="Benzin">Benzin</option>
+                            <option value="Dizel">Dizel</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="TurboDizel">Turbo Dizel</option>
+                            <option value="Gaz">Gaz</option>
+                            <option value="Electricity">Electricity</option>
                         </select>
                     </div>
                     <div class="mb-3 col-md-6">
@@ -270,17 +270,17 @@
                     <div class="mb-3 col-md-6">
                         <label for="transmission" class="form-label">Transmission</label>
                         <select class="form-select" name="transmission" id="transmission">
-                            <option value="manual">Manual</option>
-                            <option selected value="automatic">Automatic</option>
+                            <option value="Manual">Manual</option>
+                            <option selected value="Automatic">Automatic</option>
                             <option value="manualAutomatic">Manual + Automatic</option>
                         </select>
                     </div>
                     <div class="mb-3 col-md-6">
                         <label for="drive" class="form-label">Drive</label>
                         <select class="form-select" name="drive" id="drive">
-                            <option selected value="front wheel">Front Wheel</option>
-                            <option value="rear wheel">Rear Wheel</option>
-                            <option value="four wheel">4 Wheel</option>
+                            <option selected value="Front wheel">Front Wheel</option>
+                            <option value="Rear wheel">Rear Wheel</option>
+                            <option value="4 wheel">4 Wheel</option>
                         </select>
                     </div>
                     <div class="mb-3 col-md-6 form-check">
@@ -358,7 +358,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Images Section -->
 
         <button type="submit" class="btn btn-primary mt-3 mb-5">edit car</button>
