@@ -291,7 +291,7 @@ def add_car():
             engine=json.dumps(engine),
             chassis=json.dumps(chassis),
             specs=json.dumps(specs),
-            music=music,
+            music=json.dumps(music),
             owner_id=current_user.id
         )
 
@@ -1188,7 +1188,7 @@ def api_add_car(id):
     return jsonify({"POST": "Car added successfully"})
 
 
-@app.route('/edit/car/<int:id>', methods=['PUT'])
+@app.route('/edit/car/<int:id>', methods=['PUT', "GET"])
 def api_edit_car(id):
     car = Car.query.get(id)
     if request.method == 'PUT':
@@ -1214,13 +1214,13 @@ def api_edit_car(id):
             "year_of_manufacturer": car.year_of_manufacture,
             "body_color": car.body_color,
             "body_type": car.body_type,
-            "price_conditions": car.price_conditions,
-            "mileage_limit": car.mileage_limit,
-            "insurance": car.insurance,
-            "engine": car.engine,
-            "chassis": car.chassis,
-            "other": car.specs,
-            "music": car.music
+            "price_conditions": json.loads(car.price_conditions),
+            "mileage_limit": json.loads(car.mileage_limit),
+            "insurance": json.loads(car.insurance),
+            "engine": json.loads(car.engine),
+            "chassis": json.loads(car.chassis),
+            "other": json.loads(car.specs),
+            "music": json.loads(car.music)
         }
 
         seasons, tariffs = get_price_conditions(id)
