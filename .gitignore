@@ -1,0 +1,4 @@
+# .gitignore
+
+# Ignore SQLite database file
+data.db
