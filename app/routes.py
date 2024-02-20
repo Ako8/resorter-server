@@ -8,20 +8,19 @@ from sqlalchemy import or_, not_
 
 from app import app, db, bcrypt
 from app.forms import RegistrationForm, LoginForm
-from app.models import User, Order, FlatOrder, Car, Tariff, Season, \
-    Delivery, Discount, Services, Region
+from app.models import User, Order, Car, Tariff, Season, Delivery, Discount, Services
 
 
+# ******************* Dashboard Routes *************************
 @app.route("/")
 @app.route("/api")
 @login_required
 def dashboard():
-    car_orders = Order.query.filter_by(order_owner=True)
-    flat_orders = FlatOrder.query.all()
-    return render_template("dashboard.html", car_orders=car_orders, flat_orders=flat_orders)
+    return render_template("dashboard.html")
 
 
 @app.route("/register", methods=['GET', 'POST'])
+@login_required
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -131,7 +130,6 @@ def edit_user(id):
     return render_template("edit_users.html", user=user)
 
 
-# API #################################################
 @app.route('/add_car', methods=['GET', 'POST'])
 @login_required
 def add_car():
@@ -814,6 +812,7 @@ def edit_priserise(id):
     return render_template("edit_pricerise.html", cars=cars, discount=discount)
 
 
+# ******************* Function For APIS *************************
 @app.route("/discounts/delete_priserise/<int:id>")
 @login_required
 def delete_priserise(id):
@@ -959,6 +958,17 @@ def filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_co
     return filtered_cars
 
 
+def filter_by_checkboxes(cars, checkboxes):
+    filtered_cars = []
+
+    for car in cars:
+        extra_services = [c.service for c in car.extra_services]
+        if all(checkbox in extra_services for checkbox in checkboxes):
+            filtered_cars.append(car)
+
+    return filtered_cars
+
+
 def generate_car_json(cars, price_and_id):
     cars_json = []
     for car in cars:
@@ -968,6 +978,20 @@ def generate_car_json(cars, price_and_id):
             if pid["id"] == car.id:
                 price = pid["price"]
                 discounted = pid["discounted"]
+
+        extra_services = []
+        for service in car.extra_services:
+            extra_service = {
+                "service": service.service,
+                "price_info": json.loads(service.price_info),
+                "fee": service.fee
+            }
+            extra_services.append(extra_service)
+
+        music = []
+        for m, value in json.loads(car.music).items():
+            if value:
+                music.append(m.capitalize())
 
         images = json.loads(car.gallery) if car.gallery else None
         car_json = {
@@ -984,8 +1008,9 @@ def generate_car_json(cars, price_and_id):
             "mileage_limit": json.loads(car.mileage_limit),
             "price": price,
             "discounted": discounted,
-            "music": json.loads(car.music) if car.music else None,
-            "image": images
+            "music": ', '.join(music),
+            "image": images,
+            "extra_services": extra_services
         }
         cars_json.append(car_json)
     return cars_json
@@ -1130,7 +1155,6 @@ def get_price_conditions(id):
 
 
 # ******************* APIS *************************
-
 @app.route("/filter/cars", methods=["GET"])
 def api_filter_cars():
     today = datetime.now().date()
@@ -1143,7 +1167,9 @@ def api_filter_cars():
             pick_up = request.args.get('pick_up', default="Tbilisi")
             min_price = request.args.get('min_price', default="0")
             max_price = request.args.get('max_price', default="10000")
-            body_types = request.args.getlist('body_types') or ["Sedan", "Hatchback", "Wagon", "Minivan", "Minibus", "Crossover", "Pickup", "Cabriolet", "Scooter", "Motorcycle", "ATV", "Buggy", "Coupe"]
+            body_types = request.args.getlist('body_types') or ["Sedan", "Hatchback", "Wagon", "Minivan", "Minibus",
+                                                                "Crossover", "Pickup", "Cabriolet", "Scooter", "Motorcycle",
+                                                                "ATV", "Buggy", "Coupe"]
             fuels = request.args.getlist('fuels') or ["Benzin", "Dizel", "Hybrid", "Turbo Dizel", "Gaz", "Electricity"]
             drives = request.args.getlist('drives') or ["Front wheel", "Rear wheel", "4 wheel"]
             transmission = request.args.getlist('transmission') or ["Manual", "Automatic"]
@@ -1152,11 +1178,13 @@ def api_filter_cars():
             engine_type_min = request.args.get('engine_type_min', default="0")
             engine_type_max = request.args.get('engine_type_max', default="80")
             year = request.args.get('year', default="1999")
+            checkboxes = request.args.getlist('checkboxes')
 
             # Filter Cars
             cars = filter_date_range(start_date, end_date)
             cars = filter_working_days(cars)
             cars = filter_public_holiday(cars)
+            cars = filter_by_checkboxes(cars, checkboxes)
             cars, price_and_id = filter_by_price(cars, start_date, end_date, min_price, max_price)
             cars = filter_by_delivery(cars, pick_up)
             cars = filter_by_specs(cars, body_types, fuels, drives, transmission, year, fuel_consumption_min,
@@ -1166,7 +1194,6 @@ def api_filter_cars():
             return jsonify({"cars": cars_json})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 
 @app.route('/add/car/<int:id>', methods=['POST', "GET"])
@@ -1385,11 +1412,36 @@ def filter_options():
             {"option": "4 wheel", "value": "4 wheel"},
         ]
 
-        extra_options_json = [
-            {"option": "Free cancelation", "value": "Free cancelation"},
+        insurance_json = [
+            {"option": "CDW", "value": "CDW"},
+            {"option": "SCDW", "value": "SCDW"},
+            {"option": "Full Coverage", "value": "Full Coverage"},
+            {"option": "No deposit", "value": "No deposit"},
+        ]
+
+        options_json = [
+            {"option": "Free cancellation", "value": "Free cancellation"},
             {"option": "Accepts credit cards", "value": "Accepts credit cards"},
             {"option": "Unlimited mileage", "value": "Unlimited mileage"},
             {"option": "Payment in cash", "value": "Payment in cash"},
+        ]
+
+        extra_options_json = [
+            {"option": "Child Booster seat", "value": "Child Booster seat"},
+            {"option": "Ski rack", "value": "Ski rack"},
+            {"option": "Snowboard rack", "value": "Snowboard rack"},
+            {"option": "The second driver in the contract", "value": "The second driver in the contract"},
+            {"option": "Roof rack", "value": "Roof rack"},
+            {"option": "Child safety seat (up to 1 year old)", "value": "Child safety seat (up to 1 year old)"},
+            {"option": "Child seat", "value": "Child seat"},
+            {"option": "SIM-card", "value": "SIM-card"},
+            {"option": "Wireless hotspot on board", "value": "Wireless hotspot on board"},
+            {"option": "Driver's helmet", "value": "Driver's helmet"},
+            {"option": "Passenger helmet", "value": "Passenger helmet"},
+            {"option": "Motorcycle Top Box", "value": "Motorcycle Top Box"},
+            {"option": "Electric scooter with charger", "value": "Electric scooter with charger"},
+            {"option": "Winter Tyres", "value": "Winter Tyres"},
+            {"option": "Snow Chains", "value": "Snow Chains"},
         ]
 
         response = {
@@ -1397,7 +1449,9 @@ def filter_options():
             "gearbox": transmission_json,
             "engine": engine_json,
             "drive": drive_json,
-            "extra_options": extra_options_json
+            "extra_services": extra_options_json,
+            "insurance": insurance_json,
+            "options": options_json
         }
 
         return jsonify(response)

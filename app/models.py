@@ -29,7 +29,6 @@ class User(db.Model, UserMixin):
     tariffs = relationship("Tariff", backref="tarrif_owner", cascade="all, delete-orphan")
     seasons = relationship("Season", backref="season_owner", cascade="all, delete-orphan")
     cars = relationship("Car", backref="owner", cascade="all, delete-orphan")
-    flats = relationship("Flat", backref="flat_owner", cascade="all, delete-orphan")
 
     def __repr__(self):
         return self.company_name
@@ -68,6 +67,11 @@ discount_car_association = Table('discount_car_association', db.Model.metadata,
                                  db.Column('discount_id', db.Integer, db.ForeignKey('discounts.id')),
                                  db.Column('car_id', db.Integer, db.ForeignKey('cars.id'))
                                  )
+
+extra_services_car_association = Table('extra_services_car_association', db.Model.metadata,
+                                       db.Column('ex_service_id', db.Integer, db.ForeignKey('extra services.id')),
+                                       db.Column('car_id', db.Integer, db.ForeignKey('cars.id'))
+                                       )
 
 
 class Discount(db.Model):
@@ -109,129 +113,11 @@ class Car(db.Model):
     owner_id = db.Column(db.ForeignKey("users.id"))
 
     discounts = relationship("Discount", secondary=discount_car_association, back_populates="discounted_cars")
+    extra_services = relationship("ExtraService", secondary=extra_services_car_association,
+                                  back_populates="serviced_cars")
 
     def __repr__(self):
         return self.brand
-
-
-class Flat(db.Model):
-    __tablename__ = "flats"
-
-    id = db.Column(db.Integer, primary_key=True)
-    images = db.Column(db.String)
-    name = db.Column(db.String)
-    location = db.Column(db.String)
-    region_id = db.Column(db.ForeignKey("regions.id"))
-    region = db.relationship("Region", uselist=False)
-    overview = db.Column(db.Text)
-    day_price = db.Column(db.Float)
-    map = db.Column(db.String)
-    flat_type_id = db.Column(db.ForeignKey('types.id'))
-    flat_type = db.relationship("FlatType", uselist=False)
-    flat_owner_id = db.Column(db.ForeignKey("users.id"))
-
-    def __repr__(self):
-        return self.name
-
-
-class Region(db.Model):
-    __tablename__ = "regions"
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    images = db.Column(db.Text)
-    video = db.Column(db.String)
-    article_one = db.Column(db.Text)
-    article_two = db.Column(db.Text)
-    article_three = db.Column(db.Text)
-
-    def __repr__(self):
-        return self.name
-
-
-class FlatType(db.Model):
-    __tablename__ = 'types'
-
-    id = db.Column(db.Integer, primary_key=True)
-    icon = db.Column(db.String)
-    name = db.Column(db.String)
-    desc = db.Column(db.Text)
-
-    def __repr__(self):
-        return self.name
-
-
-class Location(db.Model):
-    __tablename__ = 'locations'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    overview = db.Column(db.Text)
-    place_type = db.Column(db.String)
-    images = db.Column(db.String)
-    map = db.Column(db.String)
-    region_id = db.Column(db.ForeignKey("regions.id"))
-    region = db.relationship("Region", uselist=False)
-
-    def __repr__(self):
-        return self.name
-
-
-class Order(db.Model):
-    __tablename__ = 'orders'
-
-    id = db.Column(db.Integer, primary_key=True)
-    car_id = db.Column(db.ForeignKey("cars.id"))
-    car_name = db.relationship("Car", uselist=False)
-    rent_date = db.Column(db.String)
-    unrent_date = db.Column(db.String)
-    pickup_city = db.Column(db.String)
-    drop_city = db.Column(db.String)
-    total_price = db.Column(db.Float)
-    host_id = db.Column(db.ForeignKey("users.id"))
-    host = db.relationship("User", uselist=False)
-    customer_name = db.Column(db.String)
-    customer_email = db.Column(db.String)
-    customer_phone = db.Column(db.String)
-    customer_phone_op = db.Column(db.String)
-    customer_birthdate = db.Column(db.String)
-    customer_app = db.Column(db.String)
-    order_owner = db.Column(db.Boolean, default=True)
-
-    def __repr__(self):
-        return str(self.id)
-
-
-class FlatOrder(db.Model):
-    __tablename__ = 'flat-orders'
-
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String)
-    phone = db.Column(db.String)
-    number_of_people = db.Column(db.Integer)
-    rent_date = db.Column(db.String)
-    unrent_date = db.Column(db.String)
-    customer_request = db.Column(db.Text)
-    flat_id = db.Column(db.ForeignKey("flats.id"))
-    flat_name = db.relationship("Flat", uselist=False)
-    total_price = db.Column(db.Float)
-    host_id = db.Column(db.ForeignKey("users.id"))
-    host = db.relationship("User", uselist=False)
-
-    def __repr__(self):
-        return str(self.id)
-
-
-class Activity(db.Model):
-    __tablename__ = "activity"
-
-    id = db.Column(db.Integer, primary_key=True)
-    ip_add = db.Column(db.String)
-    more_info = db.Column(db.Text)
-    history = db.Column(db.Text)
-
-    def __repr__(self):
-        return self.ip_add
 
 
 class Services(db.Model):
@@ -242,3 +128,49 @@ class Services(db.Model):
     svg = db.Column(db.Text)
     content = db.Column(db.Text)
 
+
+class ExtraService(db.Model):
+    __tablename__ = "extra services"
+
+    id = db.Column(db.Integer, primary_key=True)
+    service = db.Column(db.String)
+    price_info = db.Column(db.Text)
+    fee = db.Column(db.Integer)
+
+    serviced_cars = relationship("Car", secondary=extra_services_car_association, back_populates="extra_services")
+
+
+class Order(db.Model):
+    __tablename__ = 'orders'
+
+    id = db.Column(db.Integer, primary_key=True)
+    car_id = db.Column(db.ForeignKey("cars.id"))
+    car_name = db.relationship("Car", uselist=False)
+    host_id = db.Column(db.ForeignKey("users.id"))
+    host = db.relationship("User", uselist=False)
+    customer_id = db.Column(db.ForeignKey("customers.id"))
+    customer = db.relationship("Customer", back_populates="orders", uselist=False)
+
+    rent_date = db.Column(db.String)
+    unrent_date = db.Column(db.String)
+    pickup = db.Column(db.String)
+    drop = db.Column(db.String)
+    total_price = db.Column(db.Float)
+    extras_info = db.Column(db.Text)
+
+    def __repr__(self):
+        return str(self.id)
+
+
+class Customer(db.Model):
+    __tablename__ = "customers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    fullname = db.Column(db.String)
+    email = db.Column(db.String)
+    birthdate = db.Column(db.DateTime)
+    contact = db.Column(db.Text)
+    orders = relationship("Order", back_populates="customer")
+
+    def __repr__(self):
+        return self.fullname
