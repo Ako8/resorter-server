@@ -22,26 +22,26 @@ def dashboard():
 
 
 @app.route("/register", methods=['GET', 'POST'])
-@login_required
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        working_days = {
-            "monday": True,
-            "tuesday": True,
-            "wednesday": True,
-            "thursday": True,
-            "friday": True,
-            "saturday": True,
-            "sunday": True
-        }
-        user = User(company_name=form.username.data, email=form.email.data, password=hashed_password,
-                    working_days=json.dumps(working_days), payment_methods=[], public_holidays=[])
-        db.session.add(user)
-        db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('manage_users'))
+        if form.password.data == "akoako1234":
+            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+            working_days = {
+                "monday": True,
+                "tuesday": True,
+                "wednesday": True,
+                "thursday": True,
+                "friday": True,
+                "saturday": True,
+                "sunday": True
+            }
+            user = User(company_name=form.username.data, email=form.email.data, password=hashed_password,
+                        working_days=json.dumps(working_days), payment_methods=[], public_holidays=[])
+            db.session.add(user)
+            db.session.commit()
+            flash('Your account has been created! You are now able to log in', 'success')
+            return redirect(url_for('manage_users'))
     return render_template('register.html', form=form)
 
 
