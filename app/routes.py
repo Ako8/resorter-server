@@ -37,7 +37,7 @@ def register():
                 "sunday": True
             }
             user = User(company_name=form.username.data, email=form.email.data, password=hashed_password,
-                        working_days=json.dumps(working_days), payment_methods=[], public_holidays=[])
+                        working_days=json.dumps(working_days), payment_methods="[]", public_holidays="[]")
             db.session.add(user)
             db.session.commit()
             flash('Your account has been created! You are now able to log in', 'success')
