@@ -8,7 +8,7 @@ from sqlalchemy import or_, not_
 
 from app import app, db, bcrypt
 from app.forms import RegistrationForm, LoginForm
-from app.models import User, Order, Car, Tariff, Season, Delivery, Discount, Services
+from app.models import User, Order, Car, Tariff, Season, Delivery, Discount, Services, Customer
 
 
 # ******************* Dashboard Routes *************************
@@ -1168,7 +1168,8 @@ def api_filter_cars():
             min_price = request.args.get('min_price', default="0")
             max_price = request.args.get('max_price', default="10000")
             body_types = request.args.getlist('body_types') or ["Sedan", "Hatchback", "Wagon", "Minivan", "Minibus",
-                                                                "Crossover", "Pickup", "Cabriolet", "Scooter", "Motorcycle",
+                                                                "Crossover", "Pickup", "Cabriolet", "Scooter",
+                                                                "Motorcycle",
                                                                 "ATV", "Buggy", "Coupe"]
             fuels = request.args.getlist('fuels') or ["Benzin", "Dizel", "Hybrid", "Turbo Dizel", "Gaz", "Electricity"]
             drives = request.args.getlist('drives') or ["Front wheel", "Rear wheel", "4 wheel"]
@@ -1511,3 +1512,70 @@ def forms_car():
     }
 
     return jsonify(select_fields)
+
+
+@app.route("/take-order", methods=["GET", "POST"])
+def take_order():
+    if request.method == "POST":
+        data = request.get_json()
+        rent_date_str = data.get("rent_date")
+        unrent_date_str = data.get("unrent_date")
+        pickup = data.get("pickup")
+        pickup_time = data.get("pickup-time")
+        dropoff = data.get("dropoff")
+        dropoff_time = data.get("dropoff-time")
+        fullname = data.get("fullname")
+        email = data.get("email")
+        birth_str = data.get("birthdate")
+        contact = data.get("contact")
+        comment = data.get("comment")
+        extras_info = data.get("extra_info")
+        total_cost = data.get("total_cost")
+        car_id = data.get("car_id")
+
+        date_format = "%Y-%m-%d"
+        customer = Customer.query.filter_by(fullname=fullname, email=email).first()
+        if customer is None:
+            birth = datetime.strptime(birth_str, date_format)
+
+            customer = Customer(
+                fullname=fullname,
+                email=email,
+                birthdate=birth,
+                contact=json.dumps(contact),
+            )
+            db.session.add(customer)
+
+        p_time_and_location = {
+            "location": pickup,
+            "time": pickup_time,
+        }
+
+        d_time_and_location = {
+            "location": dropoff,
+            "time": dropoff_time,
+        }
+
+        car = Car.query.get(car_id)
+        host = User.query.get(car.owner_id)
+
+        rent_date = datetime.strptime(rent_date_str, date_format)
+        unrent_date = datetime.strptime(unrent_date_str, date_format)
+
+        new_order = Order(
+            customer_id=customer.id,
+            pickup=json.dumps(p_time_and_location),
+            drop=json.dumps(d_time_and_location),
+            car_id=car_id,
+            unrent_date=unrent_date,
+            rent_date=rent_date,
+            host_id=host.id,
+            total_price=total_cost,
+            comment=comment,
+            extras_info=json.dumps(extras_info)
+        )
+
+        db.session.add(new_order)
+        db.session.commit()
+
+        return jsonify({"POST": "suk sex"})

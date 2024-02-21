@@ -157,6 +157,7 @@ class Order(db.Model):
     drop = db.Column(db.String)
     total_price = db.Column(db.Float)
     extras_info = db.Column(db.Text)
+    comment = db.Column(db.Text)
 
     def __repr__(self):
         return str(self.id)
