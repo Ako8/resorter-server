@@ -1375,6 +1375,22 @@ def add_user():
 @app.route("/filter/options", methods=["GET"])
 def filter_options():
     if request.method == "GET":
+        body_types_json = [
+            {"option": "Sedan", "value": "Sedan"},
+            {"option": "Hatchback", "value": "Hatchback"},
+            {"option": "Wagon", "value": "Wagon"},
+            {"option": "Minivan", "value": "Minivan"},
+            {"option": "Minibus", "value": "Minibus"},
+            {"option": "Crossover", "value": "Crossover"},
+            {"option": "Pickup", "value": "Pickup"},
+            {"option": "Cabriolet", "value": "Cabriolet"},
+            {"option": "Scooter", "value": "Scooter"},
+            {"option": "Motorcycle", "value": "Motorcycle"},
+            {"option": "ATV", "value": "ATV"},
+            {"option": "Buggy", "value": "Buggy"},
+            {"option": "Coupe", "value": "Coupe"}
+        ]
+
         pickups_json = [
             {"option": "Tbilisi", "value": "Tbilisi"},
             {"option": "Kutaisi", "value": "Kutaisi"},
@@ -1452,7 +1468,8 @@ def filter_options():
             "drive": drive_json,
             "extra_services": extra_options_json,
             "insurance": insurance_json,
-            "options": options_json
+            "options": options_json,
+            "body_types": body_types_json
         }
 
         return jsonify(response)
