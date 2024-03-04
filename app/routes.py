@@ -864,10 +864,13 @@ def filter_public_holiday(cars):
     for car in cars:
         user = User.query.get(car.owner_id)
         public_holidays = json.loads(user.public_holidays)
-        for holiday_data in public_holidays:
-            if holiday_data.get("date") != holiday:
-                filtered_cars.append(car)
-                break
+        if public_holidays:
+            for holiday_data in public_holidays:
+                if holiday_data.get("date") != holiday:
+                    filtered_cars.append(car)
+                    break
+        else:
+            filtered_cars.append(car)
 
     return filtered_cars
 
