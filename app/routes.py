@@ -17,6 +17,7 @@ from app.models import User, Order, Car, Tariff, Season, Delivery, Discount, Ser
 
 load_dotenv()
 
+
 aws_access_key = os.getenv("aws_access_key")
 aws_secret_key = os.getenv("aws_secret_key")
 
