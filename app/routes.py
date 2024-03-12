@@ -1,10 +1,7 @@
+import base64
 import json
-import mimetypes
-import os
 from datetime import datetime, timedelta
 
-import boto3
-from dotenv import load_dotenv
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from sqlalchemy import or_, not_
@@ -13,23 +10,8 @@ from app import app, db, bcrypt
 from app.forms import RegistrationForm, LoginForm
 from app.models import User, Order, Car, Tariff, Season, Delivery, Discount, Services, Customer
 
+
 # ******************* Dashboard Routes *************************
-
-load_dotenv()
-
-
-aws_access_key = os.getenv("aws_access_key")
-aws_secret_key = os.getenv("aws_secret_key")
-
-s3 = boto3.client(
-    's3',
-    region_name='fra1',
-    endpoint_url='https://resorter.fra1.digitaloceanspaces.com',
-    aws_access_key_id=aws_access_key,
-    aws_secret_access_key=aws_secret_key
-)
-
-
 @app.route("/")
 @app.route("/api")
 @login_required
@@ -267,28 +249,14 @@ def add_car():
         registration_certificate = request.files.getlist('registrationCertificate')
 
         registration_certificate_data = []
-        for file in registration_certificate:
-            content_type, encoding = mimetypes.guess_type(file.filename)
-            s3.upload_fileobj(
-                file,
-                'registration_certificates',
-                file.filename,
-                ExtraArgs={'ContentType': content_type, 'ACL': 'public-read'}
-            )
-            image = f"https://resorter.fra1.cdn.digitaloceanspaces.com/registration_certificates/{file.filename}"
-            registration_certificate_data.append(image)
+        for image_file in registration_certificate:
+            image_data = base64.b64encode(image_file.read()).decode('utf-8')
+            registration_certificate_data.append(image_data)
 
         images_data = []
-        for file in car_images:
-            content_type, encoding = mimetypes.guess_type(file.filename)
-            s3.upload_fileobj(
-                file,
-                'cars',
-                file.filename,
-                ExtraArgs={'ContentType': content_type, 'ACL': 'public-read'}
-            )
-            image = f"https://resorter.fra1.cdn.digitaloceanspaces.com/cars/{file.filename}"
-            images_data.append(image)
+        for image_file in car_images:
+            image_data = base64.b64encode(image_file.read()).decode('utf-8')
+            images_data.append(image_data)
 
         gallery = {"images": images_data}
         registration_certificate = {"images": registration_certificate_data}

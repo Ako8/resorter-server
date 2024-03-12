@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha2/css/bootstrap.min.css"
+          integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8sh+WyQ8f5e6d7IqWjwlEjFg8ezydBCsArWXa1" crossorigin="anonymous">
+    <title>Orders/Customers</title>
+</head>
+<body>
+{% extends 'base.html' %}
+
+{% block main %}
+<style>
+    h2 {
+        color: #333333;
+    }
+
+    input:hover, label:hover {
+        cursor: pointer;
+    }
+</style>
+<div class="container mt-5 p-4">
+    <table class="table table-striped">
+        <thead>
+        <tr class="border">
+            <th scope="col">#</th>
+            <th scope="col">Rent</th>
+            <th scope="col">Unrent</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for ord in orders %}
+        <tr class="border">
+            <th scope="row">ID {{ ord.id }}</th>
+            <td>{{ season.rent_date.strftime('%d %B') }}</td>
+            <td>{{ season.unrent_date.strftime('%d %B') }}</td>
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+    <hr>
+
+    <table class="table table-striped">
+        <thead>
+        <tr class="border">
+            <th scope="col">#</th>
+            <th scope="col">fullname</th>
+            <th scope="col">email</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for c in customers %}
+        <tr class="border">
+            <th scope="row">ID {{ c.id }}</th>
+            <td>{{ c.fullname }}</td>
+            <td>{{ c.email }}</td>
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}
+</body>
+</html>
